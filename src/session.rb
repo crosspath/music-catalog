@@ -1,40 +1,53 @@
 module Session
+  class Interrupt < RuntimeError
+  end
+
+  class InvalidInput < RuntimeError
+  end
+
   module_function
 
   def print_columns(items)
-    width = 0
+    max_length = items.max.size
 
-    items.each do |item|
-      unless width == 0
-        new_width = width + 3 + item.size
-        if new_width <= Session.columns
-          print ' | '
-          width += 3
-        else
-          width = 0
-          puts
-        end
+    count = count_items_in_line(max_length)
+    items = items.map { |item| item.ljust(max_length) } if max_length < Session.columns
+
+    items.each_slice(count) do |row|
+      puts row.join(' | ')
+    end
+  end
+
+  def count_items_in_line(max_length)
+    columns = Session.columns
+    count   = 0
+
+    loop do
+      if max_length * (count + 1) + 3 * count <= columns
+        count += 1
+      else
+        break
       end
-      print item
-      width += item.size
     end
 
-    puts unless items.empty?
+    count
   end
 
   def columns
-    @_columns ||= Readline.get_screen_size[1] # [lines, columns] => columns
+    @columns ||= `tput cols`.to_i
   end
 
   def get_char
     c = STDIN.getch
-    return if ["\u0003", "\u0004"].include?(c) # Ctrl+C, Ctrl+D
+    raise Interrupt if ["\u0003", "\u0004"].include?(c) # Ctrl+C, Ctrl+D
     c
   end
 
   def get_string
-    Signal.trap('INT') { return } # Ctrl+C
-    answer = gets
-    answer # answer == nil if Ctrl+D
+    Signal.trap('INT') { raise Interrupt } # Ctrl+C
+    result = gets # nil if Ctrl+D
+    raise Interrupt unless result
+
+    result.chomp
   end
 end

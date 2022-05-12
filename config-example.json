@@ -1,0 +1,43 @@
+{
+  "dir": "/home/user_name/Music",
+  "mongo": "mongodb://localhost:27017/music-catalog",
+  "tempo": {
+    "slow": "0...90",
+    "average": "90...130",
+    "fast": "130...160",
+    "very fast": "160.."
+  },
+  "options": {
+    "tags": {
+      "title": "Tags",
+      "select": "0..",
+      "items": ["any", "tags", "or", "genres", "here"]
+    },
+    "energy": {
+      "title": "Energy",
+      "select": "1",
+      "items": ["low", "normal", "high"]
+    }
+  },
+  "playlists": [
+    {
+      "name": "no tags",
+      "options": [{"tags": []}]
+    },
+    {
+      "name": "low energy",
+      "options": [{"energy": ["low"]}]
+    },
+    {
+      "name": "normal energy and here tag",
+      "options": [{"energy": ["normal"], "tags": ["here"]}]
+    },
+    {
+      "name": "high energy or here tag",
+      "options": [
+        {"energy": ["high"]},
+        {"tags": ["here"]}
+      ]
+    }
+  ]
+}

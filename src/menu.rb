@@ -1,27 +1,23 @@
 module Menu
-  FILTERS = [
-    {list: Filters::TEMPO,  column: :bpm,    text: 'скорость'},
-    {list: Filters::MOOD,   column: :mood,   text: 'настроение'},
-    {list: Filters::MOTION, column: :motion, text: 'движение'},
-    {list: Filters::GENRE,  column: :genre,  text: 'жанр'},
-  ]
-
-  MAIN = [
-    {key: '1', title: 'Управление каталогом музыки', fn: ->{action_manage}},
-    {key: '2', title: 'Подбор музыки по каталогу', fn: ->{action_selection}},
-    {key: '!', title: 'Выход', back: true},
-  ]
-
-  MANAGE = [
-    {key: '1', title: 'Заполнить все новые записи', fn: ->{action_manage_sync}},
-    {key: '2', title: 'Выбрать из списка', fn: ->{action_manage_list}},
-    {key: '3', title: 'Поиск по названию', fn: ->{action_manage_search}},
-    {key: '%', title: 'Назад', back: true},
+  ITEMS = [
+    {
+      key: '1',
+      title: 'Управление каталогом музыки',
+      action: :catalog,
+      nested: [
+        {key: '1', title: 'Заполнить все новые записи', action: :catalog_sync},
+        {key: '2', title: 'Выбрать из списка', action: :catalog_select},
+        {key: '3', title: 'Поиск по названию', action: :catalog_search},
+        {key: '%', title: 'Назад', action: :back},
+      ]
+    },
+    {key: '2', title: 'Подбор музыки по каталогу', action: :selection},
+    {key: '3', title: 'Создать плэйлисты', action: :playlists},
+    {key: '!', title: 'Выход', action: :back},
   ]
 
   module_function
 
-  # [{key: Char, title: String, back: true | nil, fn: Proc | nil}, ...]
   def menu(options = [])
     loop do
       puts
@@ -33,13 +29,13 @@ module Menu
       c = Session.get_char
       return unless c
 
-      found  = false
+      found = false
 
       options.each do |opt|
         if opt[:key] == c
           found = true
-          return if opt[:back]
-          opt[:fn].call
+          return if opt[:action] == :back
+          public_send(opt[:action], opt[:nested])
         end
       end
 
@@ -48,61 +44,90 @@ module Menu
   end
 
   def main
-    menu(Menu::MAIN)
+    menu(Menu::ITEMS)
+  rescue Session::Interrupt
+    return
   end
 
-  def action_manage
-    menu(Menu::MANAGE)
+  def catalog(nested_menu)
+    menu(nested_menu)
+  rescue Session::Interrupt
+    return
   end
 
-  def action_manage_sync
-    filters = Menu::FILTERS.reject { |item| item[:column] == :bpm }
+  def catalog_sync(*)
+    Songs::Model.all.each do |model|
+      next unless model.new?
 
-    Songs.new.each do |(filepath, file)|
-      next if DB[:songs].where(filepath: file).first
-
-      puts file
+      puts "= #{model.filename}"
 
       begin
-        row = SongInfo.ask(filepath, file, filters)
-        return unless row
-        DB[:songs].insert(row)
+        model.ask
+      rescue Session::Interrupt
+        return
       rescue => e
         puts e.message, e.backtrace
       end
     end
-    
+
     puts 'Задача завершена'
   end
 
-  def action_selection
+  def selection(*)
     loop do
       puts
       puts 'Условия поиска:'
 
-      Menu::FILTERS.each do |h|
-        puts "- #{h[:text]} -"
-        SongInfo.song_characteristics(h[:list])
+      Config::OPTIONS.each do |_, option|
+        puts "- #{option.title} -"
+        Session.print_columns(option.items_with_keys_as_array)
         puts
       end
 
-      puts '>> Пример ввода: 2wsz'
+      puts '>> Пример ввода: 1 2 1'
       puts '>> Знак "-" можно использовать для пропуска условия'
       print '--> '
 
-      answer = Session.get_string
-      return unless answer
+      values  = Session.get_string.split(' ')
+      filters = []
 
-      filters = string_to_filters(answer.chomp)
-      if filters
-        return if filters.empty?
-        songs = Songs.filter(filters)
-        action_push_songs(songs) unless songs.empty?
+      selected_option_values = {}
+
+      return if values.empty?
+
+      Config::OPTIONS.each.with_index do |(k, option), index|
+        next if values[index] == '-'
+
+        selected = option.items_for_keys(values[index])
+        filters << ->(song) { (song[k] & selected).size > 0 }
+
+        selected_option_values[k] = selected
       end
+
+      selected_songs = Songs::Model.all.select { |model| model.match?([filters]) }
+      if selected_songs.empty?
+        puts 'Не найдены песни по указанным фильтрам'
+      else
+        max_length = Config::OPTIONS.map { |_, option| option.title }.max.size + 1
+        index_size = selected_songs.size.to_s.size
+        selected_songs.each_with_index do |song, index|
+          puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.filename}"
+          Config::OPTIONS.each do |key, option|
+            rest = song.options.fetch(key, []) - selected_option_values.fetch(key, [])
+            next if rest.empty?
+
+            puts "#{option.title}:#{' '.ljust(max_length - option.title.size)}#{rest.join(', ')}"
+          end
+          puts
+        end
+        push_songs(selected_songs)
+      end
+    rescue Session::Interrupt
+      return
     end
   end
 
-  def action_push_songs(songs)
+  def push_songs(songs)
     puts
     puts 'Добавить песни в проигрыватель?'
     puts 'Номера песен, перечисленные через пробел:'
@@ -115,9 +140,10 @@ module Menu
     selected = []
 
     indices.each do |index|
-      song = songs[index]
+      song = songs[index.to_i + 1]
       next unless song
-      selected << '"' + MUSIC_DIR + '/' + song[:filepath].gsub('"', '\"') + '"'
+
+      selected << song.filepath.inspect
     end
 
     if selected.empty?
@@ -130,20 +156,5 @@ module Menu
 
       puts "Добавлены песни: #{selected.size}"
     end
-  end
-
-  def string_to_filters(string)
-    res = string.each_char.map.with_index do |c, i|
-      item = Menu::FILTERS[i]
-      if c == '-'
-        nil
-      else
-        return unless Filters.includes?(c, item[:list])
-        [item[:column], c]
-      end
-    end.compact.to_h
-
-    res[:bpm] = Filters::TEMPO_BPM[res[:bpm]] if res[:bpm]
-    res
   end
 end
