@@ -6,7 +6,7 @@ module Menu
       action: :catalog,
       nested: [
         {key: '1', title: 'Заполнить все новые записи', action: :catalog_sync},
-        {key: '2', title: 'Выбрать из списка', action: :catalog_select},
+        {key: '2', title: 'Выбрать новую запись из списка', action: :catalog_select},
         {key: '3', title: 'Поиск по названию', action: :catalog_search},
         {key: '%', title: 'Назад', action: :back},
       ]
@@ -59,18 +59,42 @@ module Menu
     Songs::Model.all.each do |model|
       next unless model.new?
 
-      puts "= #{model.filename}"
-
-      begin
-        model.ask
-      rescue Session::Interrupt
-        return
-      rescue => e
-        puts e.message, e.backtrace
-      end
+      fill_record(model)
     end
 
     puts 'Задача завершена'
+  rescue Session::Interrupt
+    return
+  end
+
+  def catalog_select(*)
+    puts
+
+    songs = Songs::Model.all.select(&:new?)
+    print_songs_without_options(songs)
+
+    if songs.empty?
+      puts 'Нет новых записей'
+      return
+    end
+
+    puts
+    puts 'Какие новые записи необходимо заполнить?'
+    puts 'Номера песен, перечисленные через пробел:'
+
+    selected = select_songs_by_indices(songs)
+
+    if selected.empty?
+      puts 'Не выбраны песни'
+    else
+      selected.each do |model|
+        fill_record(model)
+      end
+
+      puts 'Задача завершена'
+    end
+  rescue Session::Interrupt
+    return
   end
 
   def selection(*)
@@ -108,18 +132,7 @@ module Menu
       if selected_songs.empty?
         puts 'Не найдены песни по указанным фильтрам'
       else
-        max_length = Config::OPTIONS.map { |_, option| option.title }.max.size + 1
-        index_size = selected_songs.size.to_s.size
-        selected_songs.each_with_index do |song, index|
-          puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.filename}"
-          Config::OPTIONS.each do |key, option|
-            rest = song.options.fetch(key, []) - selected_option_values.fetch(key, [])
-            next if rest.empty?
-
-            puts "#{option.title}:#{' '.ljust(max_length - option.title.size)}#{rest.join(', ')}"
-          end
-          puts
-        end
+        print_songs_with_options(selected_songs, selected_option_values)
         push_songs(selected_songs)
       end
     rescue Session::Interrupt
@@ -127,34 +140,72 @@ module Menu
     end
   end
 
+  def print_songs_with_options(songs, selected_option_values)
+    max_length = Config::OPTIONS.map { |_, option| option.title }.max.size + 1
+    index_size = songs.size.to_s.size
+
+    songs.each_with_index do |song, index|
+      puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.filename}"
+
+      Config::OPTIONS.each do |key, option|
+        rest = song.options.fetch(key, []) - selected_option_values.fetch(key, [])
+        next if rest.empty?
+
+        puts "#{option.title}:#{' '.ljust(max_length - option.title.size)}#{rest.join(', ')}"
+      end
+
+      puts
+    end
+  end
+
+  def print_songs_without_options(songs)
+    index_size = songs.size.to_s.size
+
+    songs.each_with_index do |song, index|
+      puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.filename}"
+    end
+  end
+
   def push_songs(songs)
     puts
     puts 'Добавить песни в проигрыватель?'
     puts 'Номера песен, перечисленные через пробел:'
+
+    selected = select_songs_by_indices(songs).map { |song| song.filepath.inspect }
+
+    if selected.empty?
+      puts 'Не выбраны песни'
+    else
+      Songs::Player.add_songs(*selected)
+
+      puts "Добавлены песни: #{selected.size}"
+    end
+  end
+
+  def select_songs_by_indices(songs)
     print '--> '
 
     answer = Session.get_string
     return unless answer
 
-    indices  = answer.split(' ')
-    selected = []
-
-    indices.each do |index|
-      song = songs[index.to_i + 1]
+    answer.split(' ').each_with_object([]) do |index, acc|
+      song = songs[index.to_i - 1]
       next unless song
 
-      selected << song.filepath.inspect
+      acc << song
     end
+  end
 
-    if selected.empty?
-      puts 'Не выбраны песни'
-    else
-      # 2>/dev/null -- не показывать сообщения Clementine об ошибках.
-      # pgroup: true -- отвязать экземпляр Clementine от процесса Ruby,
-      # чтобы при остановке Ruby продолжил работать процесс Clementine.
-      spawn("clementine --quiet -a #{selected.join(' ')} 2>/dev/null", pgroup: true)
+  def fill_record(model)
+    puts "= #{model.filename}"
 
-      puts "Добавлены песни: #{selected.size}"
+    begin
+      Songs::Player.add_songs(model.filename.inspect)
+      model.ask
+    rescue Session::Interrupt
+      raise # re-raise exception
+    rescue => e
+      puts e.message, e.backtrace
     end
   end
 end
