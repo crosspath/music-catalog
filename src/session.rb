@@ -34,7 +34,7 @@ module Session
   end
 
   def columns
-    @columns ||= `tput cols`.to_i
+    @columns ||= IO.console.winsize[1]
   end
 
   def get_char

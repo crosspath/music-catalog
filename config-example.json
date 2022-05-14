@@ -1,5 +1,6 @@
 {
   "dir": "/home/user_name/Music",
+  "ignore": [".backup-directory", "any folder or file inside your music directory"],
   "mongo": "mongodb://localhost:27017/music-catalog",
   "tempo": {
     "slow": "0...90",
@@ -38,6 +39,14 @@
         {"energy": ["high"]},
         {"tags": ["here"]}
       ]
+    },
+    {
+      "name": "normal or high energy",
+      "options": [{"energy": ["normal", "high"]}]
+    },
+    {
+      "name": "any tag from the list: 'tags', 'or', 'genres'",
+      "options": [{"tags": ["tags", "or", "genres"]}]
     }
   ]
 }

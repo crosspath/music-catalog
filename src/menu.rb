@@ -26,78 +26,87 @@ module Menu
         puts "#{opt[:key]}. #{opt[:title]}"
       end
 
-      c = Session.get_char
-      return unless c
-
+      input = Session.get_char
       found = false
 
       options.each do |opt|
-        if opt[:key] == c
+        if opt[:key] == input
           found = true
           return if opt[:action] == :back
+
           public_send(opt[:action], opt[:nested])
         end
       end
 
       puts 'Неизвестное действие!' unless found
     end
+  rescue Session::Interrupt
+    return
   end
 
   def main
     menu(Menu::ITEMS)
-  rescue Session::Interrupt
-    return
   end
 
   def catalog(nested_menu)
     menu(nested_menu)
-  rescue Session::Interrupt
-    return
   end
 
   def catalog_sync(*)
-    Songs::Model.all.each do |model|
+    Songs::Model.scan.each do |model|
       next unless model.new?
 
       fill_record(model)
     end
 
     puts 'Задача завершена'
-  rescue Session::Interrupt
-    return
   end
 
   def catalog_select(*)
     puts
 
-    songs = Songs::Model.all.select(&:new?)
-    print_songs_without_options(songs)
+    songs = Songs::Model.scan.select(&:new?)
 
     if songs.empty?
       puts 'Нет новых записей'
       return
     end
 
+    print_songs_without_options(songs)
+
     puts
     puts 'Какие новые записи необходимо заполнить?'
-    puts 'Номера песен, перечисленные через пробел:'
 
-    selected = select_songs_by_indices(songs)
+    select_and_fill_records(songs)
+  end
 
-    if selected.empty?
-      puts 'Не выбраны песни'
+  def catalog_search(*)
+    songs = Songs::Model.scan
+
+    puts
+    puts 'Поиск песни по части имени файла:'
+    print '--> '
+
+    input = Session.get_string
+    return if input.empty?
+
+    found = songs.select { |model| model.filename.include?(input) }
+    
+    if found.empty?
+      puts 'Не найдены песни'
     else
-      selected.each do |model|
-        fill_record(model)
-      end
+      print_songs_without_options(found)
 
-      puts 'Задача завершена'
+      puts
+      puts 'Какие записи необходимо заполнить или изменить?'
+
+      select_and_fill_records(found)
     end
-  rescue Session::Interrupt
-    return
   end
 
   def selection(*)
+    songs = Songs::Model.all.reject(&:new?)
+
     loop do
       puts
       puts 'Условия поиска:'
@@ -128,16 +137,16 @@ module Menu
         selected_option_values[k] = selected
       end
 
-      selected_songs = Songs::Model.all.select { |model| model.match?([filters]) }
+      selected_songs = songs.select { |model| model.match?([filters]) }
       if selected_songs.empty?
         puts 'Не найдены песни по указанным фильтрам'
       else
         print_songs_with_options(selected_songs, selected_option_values)
         push_songs(selected_songs)
       end
-    rescue Session::Interrupt
-      return
     end
+  rescue Session::Interrupt
+    nil
   end
 
   def print_songs_with_options(songs, selected_option_values)
@@ -185,10 +194,7 @@ module Menu
   def select_songs_by_indices(songs)
     print '--> '
 
-    answer = Session.get_string
-    return unless answer
-
-    answer.split(' ').each_with_object([]) do |index, acc|
+    Session.get_string.split(' ').each_with_object([]) do |index, acc|
       song = songs[index.to_i - 1]
       next unless song
 
@@ -196,11 +202,28 @@ module Menu
     end
   end
 
+  def select_and_fill_records(songs)
+    puts 'Номера песен, перечисленные через пробел:'
+
+    selected = select_songs_by_indices(songs)
+
+    if selected.empty?
+      puts 'Не выбраны песни'
+    else
+      selected.each do |model|
+        fill_record(model)
+      end
+
+      puts 'Задача завершена'
+    end
+  end
+
   def fill_record(model)
+    puts
     puts "= #{model.filename}"
 
     begin
-      Songs::Player.add_songs(model.filename.inspect)
+      Songs::Player.add_songs(model.filepath.inspect)
       model.ask
     rescue Session::Interrupt
       raise # re-raise exception

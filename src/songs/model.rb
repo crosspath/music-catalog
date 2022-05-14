@@ -2,7 +2,7 @@ module Songs
   class Model
     extend Forwardable
 
-    def_delegators :@file, :bpm, :filename
+    def_delegators :@file, :bpm
     def_delegators :@db_entry, :match?, :new?, :options
 
     def initialize(filename, record: nil)
@@ -10,6 +10,10 @@ module Songs
       @db_entry = Songs::DbEntry.new(record || Config::DB_SONGS.find(filename: filename).first)
 
       @db_entry.filename = filename
+    end
+
+    def filename
+      @filename ||= @file.filename[0..(-1 - ::File.extname(@file.filename).size)]
     end
 
     def filepath
@@ -30,20 +34,60 @@ module Songs
       sync(options)
     end
 
+    class << self
+      attr_reader :cache
+    end
+
+    def self.scan
+      models   = all
+      @cache ||= {}
+
+      cached_keys = @cache.keys
+      new_songs   = models.select { |model| !cached_keys.include?(model.filename) && model.new? }
+
+      show_progress = new_songs.size > 20
+      counter       = 0
+
+      print "Изучение файлов (#{new_songs.size})" if show_progress
+
+      selected = models.filter_map do |model|
+        if new_songs.include?(model)
+          if show_progress
+            counter += 1
+            print '.' if counter % 20 == 0
+          end
+          model.bpm # raises RuntimeError if file is not an audio
+          @cache[model.filename] = model
+        elsif model.new?
+          @cache[model.filename]
+        else
+          @cache[model.filename] = model
+        end
+      rescue
+        nil
+      end
+
+      puts if show_progress
+
+      selected
+    end
+
     def self.all
       abs_dir = ::File.realpath(Config::MUSIC_DIR)
       skip    = abs_dir.size + 1
 
-      songs   = Dir[::File.join(abs_dir, '*')].map { |filepath| filepath[skip..] }
-      records = Config::DB_SONGS.find.to_h { |record| [record['filename'], record] }
+      filenames = Dir[::File.join(abs_dir, '**', '*')].filter_map do |filepath|
+        ::File.directory?(filepath) ? nil : filepath[skip..]
+      end
 
-      songs.map do |filename|
-        model = new(filename, record: records[filename])
-        model.bpm # raises RuntimeError if file is not an audio
-        model
-      rescue
-        nil
-      end.compact
+      filenames.reject! do |filename|
+        filename += '/'
+        Config::IGNORE_DIRECTORIES.any? { |dir| filename.start_with?(dir) }
+      end
+
+      records = Config::DB_SONGS.find.to_h { |record| [record[:filename], record] }
+
+      filenames.map { |name| new(name, record: records[name]) }
     end
 
     private

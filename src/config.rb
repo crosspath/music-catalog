@@ -77,11 +77,12 @@ class Config
 
   CONFIG = JSON.parse(File.read("#{__dir__}/../config.json"), symbolize_names: true)
   MUSIC_DIR = CONFIG[:dir]
+  IGNORE_DIRECTORIES = (CONFIG[:ignore] || []).map { |dir| dir.end_with?('/') ? dir : "#{dir}/" }
 
   MONGO = Mongo::Client.new(CONFIG[:mongo])
   DB_SONGS = MONGO[:songs]
 
-  TEMPO = CONFIG[:tempo].transform_values { |value| Tempo.new(value) }
-  OPTIONS = CONFIG[:options].transform_values { |hash| Option.new(hash) }
-  PLAYLISTS = CONFIG[:playlists].map { |hash| Playlist.new(hash) }
+  TEMPO = (CONFIG[:tempo] || {}).transform_values { |value| Tempo.new(value) }
+  OPTIONS = (CONFIG[:options] || {}).transform_values { |hash| Option.new(hash) }
+  PLAYLISTS = (CONFIG[:playlists] || []).map { |hash| Playlist.new(hash) }
 end

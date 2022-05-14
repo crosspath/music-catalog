@@ -3,7 +3,6 @@
 require 'json'
 require 'mongo'
 require 'io/console'
-require 'readline'
 
 #----
 

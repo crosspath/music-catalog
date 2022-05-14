@@ -45,7 +45,9 @@ module Songs
 
       finder = {filename: @record[:filename]}
 
-      p Config::DB_SONGS.update_one(finder, @record) # DEBUG
+      unless Config::DB_SONGS.update_one(finder, @record).n == 1
+        raise "Failed to update entry for #{@record[:filename]}"
+      end
     end
   end
 end
