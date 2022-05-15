@@ -2,7 +2,7 @@ module Songs
   class Model
     extend Forwardable
 
-    def_delegators :@file, :bpm
+    def_delegators :@file, :bpm, :filename
     def_delegators :@db_entry, :match?, :new?, :options
 
     def initialize(filename, record: nil)
@@ -12,8 +12,8 @@ module Songs
       @db_entry.filename = filename
     end
 
-    def filename
-      @filename ||= @file.filename[0..(-1 - ::File.extname(@file.filename).size)]
+    def name
+      @name ||= @file.filename[0..(-1 - ::File.extname(@file.filename).size)]
     end
 
     def filepath

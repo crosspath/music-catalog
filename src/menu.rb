@@ -90,7 +90,7 @@ module Menu
     input = Session.get_string
     return if input.empty?
 
-    found = songs.select { |model| model.filename.include?(input) }
+    found = songs.select { |model| model.name.include?(input) }
     
     if found.empty?
       puts 'Не найдены песни'
@@ -117,8 +117,8 @@ module Menu
         puts
       end
 
-      puts '>> Пример ввода: 1 2 1'
-      puts '>> Знак "-" можно использовать для пропуска условия'
+      puts 'Пример ввода: 1 2 1'
+      puts 'Знак "-" можно использовать для пропуска условия'
       print '--> '
 
       values  = Session.get_string.split(' ')
@@ -149,12 +149,48 @@ module Menu
     nil
   end
 
+  def playlists(*)
+    puts
+    puts 'Папка для сохранения файлов плэйлистов:'
+    print "(по умолчанию: #{Config::MUSIC_DIR}) --> "
+    
+    save_to = Session.get_string
+    save_to = Config::MUSIC_DIR if save_to.empty?
+
+    songs = Songs::Model.all.reject(&:new?)
+
+    puts
+
+    if File.exist?(save_to)
+      if Dir.exist?(save_to)
+        puts "Запись в папку #{save_to}:"
+      else
+        puts "По указанному пути найден файл, а не папка"
+        return
+      end
+    else
+      puts "Запись в новую папку #{save_to}:"
+    end
+
+    unless File.writable?(save_to)
+      puts "Нет прав на запись в папку #{save_to}"
+      return
+    end
+
+    puts
+
+    Config::PLAYLISTS.each do |config|
+      generator = Songs::PlaylistGenerator.new(config, songs, save_to)
+      puts(generator.save ? config.name : "#{config.name} | пропущен, песни по фильтрам не найдены")
+    end
+  end
+
   def print_songs_with_options(songs, selected_option_values)
     max_length = Config::OPTIONS.map { |_, option| option.title }.max.size + 1
     index_size = songs.size.to_s.size
 
     songs.each_with_index do |song, index|
-      puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.filename}"
+      puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.name}"
 
       Config::OPTIONS.each do |key, option|
         rest = song.options.fetch(key, []) - selected_option_values.fetch(key, [])
@@ -171,7 +207,7 @@ module Menu
     index_size = songs.size.to_s.size
 
     songs.each_with_index do |song, index|
-      puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.filename}"
+      puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.name}"
     end
   end
 
@@ -220,7 +256,7 @@ module Menu
 
   def fill_record(model)
     puts
-    puts "= #{model.filename}"
+    puts "= #{model.name}"
 
     begin
       Songs::Player.add_songs(model.filepath.inspect)

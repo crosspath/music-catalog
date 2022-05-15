@@ -18,7 +18,7 @@ module Songs
 
     def match?(matchers) # see Config::PlaylistFilter
       options = @record[:options]
-      return true if options.empty? && matchers.empty?
+      return true if options.empty? || matchers.empty?
 
       matchers.any? do |matcher|
         matcher.all? { |fn| fn.call(options) }

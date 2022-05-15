@@ -59,10 +59,10 @@ class Config
 
   PlaylistFilter = Struct.new(:hash) do
     def matcher(options_hash)
-      options_hash.each_with_object([]) do |(k, e), a|
+      options_hash.each_with_object([]) do |(k, _), a|
         next unless hash.key?(k)
 
-        a << hash[k].empty? ? ->(song) { empty_list?(song, k) } : ->(song) { any_of?(song, k) }
+        a << (hash[k].empty? ? ->(song) { empty_list?(song, k) } : ->(song) { any_of?(song, k) })
       end
     end
 
