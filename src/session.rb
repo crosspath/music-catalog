@@ -8,10 +8,12 @@ module Session
   module_function
 
   def print_columns(items)
-    max_length = items.max.size
+    max_length = items.max_by(&:size).size
 
     count = count_items_in_line(max_length)
-    items = items.map { |item| item.ljust(max_length) } if max_length < Session.columns
+    if max_length < Session.columns && items.size > count
+      items = items.map { |item| item.ljust(max_length) }
+    end
 
     items.each_slice(count) do |row|
       puts row.join(' | ')

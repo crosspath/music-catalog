@@ -47,6 +47,10 @@
     {
       "name": "any tag from the list: 'tags', 'or', 'genres'",
       "options": [{"tags": ["tags", "or", "genres"]}]
+    },
+    {
+      "name": "ignore some tags",
+      "options": [{"-tags": ["any", "here"]}]
     }
   ]
 }

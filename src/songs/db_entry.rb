@@ -1,10 +1,8 @@
 module Songs
   class DbEntry
     def initialize(hash)
-      hash ||= {options: {}}
-
-      @record = hash
-      @record[:options]
+      @record = hash || {}
+      @record[:options] ||= {}
     end
 
     %i[filename bpm options created_at updated_at].each do |mth|
