@@ -13,6 +13,8 @@ module Menu
     },
     {key: '2', title: 'Подбор музыки по каталогу', action: :selection},
     {key: '3', title: 'Создать плэйлисты', action: :playlists},
+    {key: '4', title: 'Экспорт БД', action: :export_db},
+    {key: '5', title: 'Импорт БД', action: :import_db},
     {key: '!', title: 'Выход', action: :back},
   ]
 
@@ -178,6 +180,49 @@ module Menu
     Config::PLAYLISTS.each do |config|
       generator = Songs::PlaylistGenerator.new(config, songs, save_to)
       puts(generator.save ? config.name : "#{config.name} | пропущен, песни по фильтрам не найдены")
+    end
+  end
+  
+  def export_db(*)
+    puts
+    print 'Название файла (dump.json) --> '
+
+    dump = Session.get_string
+    dump = 'dump.json' if dump.empty?
+
+    if File.exist?(dump) ? File.writable?(dump) : File.writable?('.')
+      records = Config::DB_SONGS.find.to_h do |record|
+        [record[:filename], record.slice(:options, :created_at, :updated_at, :bpm)]
+      end
+
+      File.write(dump, JSON.generate(records))
+    else
+      puts "Нет прав на запись в файл #{dump}"
+    end
+  rescue Session::Interrupt
+    nil
+  end
+  
+  def import_db(*)
+    puts
+    print 'Название файла (dump.json) --> '
+
+    dump = Session.get_string
+    dump = 'dump.json' if dump.empty?
+
+    unless File.readable?(dump)
+      puts "Нет прав на чтение файла #{dump}"
+      return
+    end
+
+    records = JSON.parse(File.read(dump))
+    records.each do |filename, data|
+      op = Config::DB_SONGS.find_one_and_update(
+        {filename: filename},
+        {'$set' => data},
+        upsert: true
+      )
+      raise "Failed to import entry for #{filename}" unless op.n == 1
     end
   end
 
