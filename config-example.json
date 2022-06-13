@@ -1,5 +1,6 @@
 {
   "dir": "/home/user_name/Music",
+  "playlists-dir": "/home/user_name/Music/Playlists",
   "ignore": [".backup-directory", "any folder or file inside your music directory"],
   "mongo": "mongodb://localhost:27017/music-catalog",
   "tempo": {

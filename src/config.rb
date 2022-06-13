@@ -90,6 +90,7 @@ class Config
 
   CONFIG = JSON.parse(File.read("#{__dir__}/../config.json"), symbolize_names: true)
   MUSIC_DIR = CONFIG[:dir]
+  PLAYLISTS_DIR = CONFIG[:'playlists-dir']
   IGNORE_DIRECTORIES = (CONFIG[:ignore] || []).map { |dir| dir.end_with?('/') ? dir : "#{dir}/" }
 
   MONGO = Mongo::Client.new(CONFIG[:mongo])

@@ -150,11 +150,7 @@ module Menu
   end
 
   def playlists(*)
-    puts
-    puts 'Папка для сохранения файлов плэйлистов:'
-    print "(по умолчанию: #{Config::MUSIC_DIR}) --> "
-    
-    save_to = Session.get_string
+    save_to = Config::PLAYLISTS_DIR
     save_to = Config::MUSIC_DIR if save_to.empty?
 
     songs = Songs::Model.all.reject(&:new?)
