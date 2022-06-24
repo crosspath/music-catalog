@@ -2,13 +2,15 @@ module Menu
   module DB
     module Export
       def self.call
+        default_path = File.join(File.realpath(Config::LOCAL_MUSIC_DIR), 'dump.json')
+
         puts
-        print 'Название файла (dump.json) --> '
+        print "Название файла (#{default_path}) --> "
 
         dump = Session.get_string
-        dump = 'dump.json' if dump.empty?
+        dump = default_path if dump.empty?
 
-        if File.exist?(dump) ? File.writable?(dump) : File.writable?('.')
+        if !File.exist?(dump) || File.writable?(dump)
           records = Config::DB_SONGS.find.to_h do |record|
             [record[:filename], record.slice(:options, :created_at, :updated_at, :bpm)]
           end
@@ -24,11 +26,13 @@ module Menu
 
     module Import
       def self.call
+        default_path = File.join(File.realpath(Config::LOCAL_MUSIC_DIR), 'dump.json')
+
         puts
-        print 'Название файла (dump.json) --> '
+        print "Название файла (#{default_path}) --> "
 
         dump = Session.get_string
-        dump = 'dump.json' if dump.empty?
+        dump = default_path if dump.empty?
 
         unless File.readable?(dump)
           puts "Нет прав на чтение файла #{dump}"
