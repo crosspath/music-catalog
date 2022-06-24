@@ -3,6 +3,8 @@ module Menu
     module Sync
       def self.call
         puts
+        puts 'Проверка файлов...'
+        puts
 
         songs_to_copy, files_to_remove = prepare_lists
 
@@ -85,7 +87,6 @@ module Menu
           songs.none? { |song| song.filename == x } && x
         end
 
-        puts 'Будут перезаписаны файлы с плэйлистами.'
         puts "Сколько песен выбрано для копирования: #{songs_to_copy.size}"
 
         print_list(songs_to_copy, &:filename)
@@ -93,7 +94,7 @@ module Menu
         puts "Сколько песен выбрано для удаления: #{files_to_remove.size}"
 
         print_list(files_to_remove, &:itself)
-        
+
         [songs_to_copy, files_to_remove]
       end
 
