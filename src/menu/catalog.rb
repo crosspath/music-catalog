@@ -94,6 +94,7 @@ module Menu
 
       def self.call
         puts
+        puts 'Проверка файлов...'
 
         songs = Songs::Model.scan.select(&:new?)
 
@@ -115,6 +116,9 @@ module Menu
       extend Output, SelectAndUpdate
 
       def self.call
+        puts
+        puts 'Проверка файлов...'
+
         songs = Songs::Model.scan
 
         puts
@@ -125,7 +129,7 @@ module Menu
         return if input.empty?
 
         found = songs.select { |model| model.name.include?(input) }
-        
+
         if found.empty?
           puts 'Не найдены песни'
         else
@@ -143,6 +147,9 @@ module Menu
       extend Output, SelectByIndex
 
       def self.call
+        puts
+        puts 'Проверка файлов...'
+
         songs = Songs::Model.all.reject(&:new?)
 
         loop do

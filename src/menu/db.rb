@@ -37,12 +37,12 @@ module Menu
 
         records = JSON.parse(File.read(dump))
         records.each do |filename, data|
-          op = Config::DB_SONGS.find_one_and_update(
+          # => Возвращает значение записи до обновления или nil (если это новая запись).
+          Config::DB_SONGS.find_one_and_update(
             {filename: filename},
-            {'$set' => data},
+            {'$set' => {filename: filename}.merge(data)},
             upsert: true
           )
-          raise "Failed to import entry for #{filename}" unless op.n == 1
         end
       end
     end
