@@ -5,9 +5,13 @@ module Songs
       @record[:options] ||= {}
     end
 
-    %i[filename bpm options created_at updated_at].each do |mth|
+    %i[filename bpm options created_at updated_at copied_at].each do |mth|
       define_method(mth) { @record[mth] }
       define_method("#{mth}=") { |v| @record[mth] = v }
+    end
+
+    def copied?
+      updated_at && updated_at == copied_at
     end
 
     def new?

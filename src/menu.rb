@@ -1,311 +1,36 @@
 module Menu
-  ITEMS = [
-    {
-      key: '1',
-      title: 'Управление каталогом музыки',
-      action: :catalog,
-      nested: [
-        {key: '1', title: 'Заполнить все новые записи', action: :catalog_sync},
-        {key: '2', title: 'Выбрать новую запись из списка', action: :catalog_select},
-        {key: '3', title: 'Поиск по названию', action: :catalog_search},
-        {key: '%', title: 'Назад', action: :back},
-      ]
-    },
-    {key: '2', title: 'Подбор музыки по каталогу', action: :selection},
-    {key: '3', title: 'Создать плэйлисты', action: :playlists},
-    {key: '4', title: 'Экспорт БД', action: :export_db},
-    {key: '5', title: 'Импорт БД', action: :import_db},
-    {key: '!', title: 'Выход', action: :back},
-  ]
+  ITEMS = JSON.parse(File.read('./menu.json'))
 
   module_function
+
+  def main
+    menu(ITEMS)
+  end
 
   def menu(options = [])
     loop do
       puts
 
-      options.each do |opt|
-        puts "#{opt[:key]}. #{opt[:title]}"
+      options.each do |key, opt|
+        puts "#{key}. #{opt['title']}"
       end
 
       input = Session.get_char
-      found = false
+      found = options[input]
 
-      options.each do |opt|
-        if opt[:key] == input
-          found = true
-          return if opt[:action] == :back
-
-          public_send(opt[:action], opt[:nested])
+      if found
+        case found['action']
+        when nil then menu(found['items'])
+        when 'back' then return
+        else
+          menu_module = found['action'].split('.').reduce(Menu) { |a, e| a.const_get(e) }
+          menu_module.call
         end
+      else
+        puts 'Неизвестное действие!'
       end
-
-      puts 'Неизвестное действие!' unless found
     end
   rescue Session::Interrupt
     return
-  end
-
-  def main
-    menu(Menu::ITEMS)
-  end
-
-  def catalog(nested_menu)
-    menu(nested_menu)
-  end
-
-  def catalog_sync(*)
-    Songs::Model.scan.each do |model|
-      next unless model.new?
-
-      fill_record(model)
-    end
-
-    puts 'Задача завершена'
-  end
-
-  def catalog_select(*)
-    puts
-
-    songs = Songs::Model.scan.select(&:new?)
-
-    if songs.empty?
-      puts 'Нет новых записей'
-      return
-    end
-
-    print_songs_without_options(songs)
-
-    puts
-    puts 'Какие новые записи необходимо заполнить?'
-
-    select_and_fill_records(songs)
-  end
-
-  def catalog_search(*)
-    songs = Songs::Model.scan
-
-    puts
-    puts 'Поиск песни по части имени файла:'
-    print '--> '
-
-    input = Session.get_string
-    return if input.empty?
-
-    found = songs.select { |model| model.name.include?(input) }
-    
-    if found.empty?
-      puts 'Не найдены песни'
-    else
-      print_songs_without_options(found)
-
-      puts
-      puts 'Какие записи необходимо заполнить или изменить?'
-
-      select_and_fill_records(found)
-    end
-  end
-
-  def selection(*)
-    songs = Songs::Model.all.reject(&:new?)
-
-    loop do
-      puts
-      puts 'Условия поиска:'
-
-      Config::OPTIONS.each do |_, option|
-        puts "- #{option.title} -"
-        Session.print_columns(option.items_with_keys_as_array)
-        puts
-      end
-
-      puts 'Пример ввода: 1 2 1'
-      puts 'Знак "-" можно использовать для пропуска условия'
-      print '--> '
-
-      values  = Session.get_string.split(' ')
-      filters = []
-
-      selected_option_values = {}
-
-      return if values.empty?
-
-      Config::OPTIONS.each.with_index do |(k, option), index|
-        next if values[index] == '-'
-
-        selected = option.items_for_keys(values[index])
-        filters << ->(song) { (song[k] & selected).size > 0 }
-
-        selected_option_values[k] = selected
-      end
-
-      selected_songs = songs.select { |model| model.match?([filters]) }
-      if selected_songs.empty?
-        puts 'Не найдены песни по указанным фильтрам'
-      else
-        print_songs_with_options(selected_songs, selected_option_values)
-        push_songs(selected_songs)
-      end
-    end
-  rescue Session::Interrupt
-    nil
-  end
-
-  def playlists(*)
-    save_to = Config::PLAYLISTS_DIR
-    save_to = Config::MUSIC_DIR if save_to.empty?
-
-    songs = Songs::Model.all.reject(&:new?)
-
-    puts
-
-    if File.exist?(save_to)
-      if Dir.exist?(save_to)
-        puts "Запись в папку #{save_to}:"
-      else
-        puts "По указанному пути найден файл, а не папка"
-        return
-      end
-    else
-      puts "Запись в новую папку #{save_to}:"
-    end
-
-    unless File.writable?(save_to)
-      puts "Нет прав на запись в папку #{save_to}"
-      return
-    end
-
-    puts
-
-    Config::PLAYLISTS.each do |config|
-      generator = Songs::PlaylistGenerator.new(config, songs, save_to)
-      puts(generator.save ? config.name : "#{config.name} | пропущен, песни по фильтрам не найдены")
-    end
-  end
-  
-  def export_db(*)
-    puts
-    print 'Название файла (dump.json) --> '
-
-    dump = Session.get_string
-    dump = 'dump.json' if dump.empty?
-
-    if File.exist?(dump) ? File.writable?(dump) : File.writable?('.')
-      records = Config::DB_SONGS.find.to_h do |record|
-        [record[:filename], record.slice(:options, :created_at, :updated_at, :bpm)]
-      end
-
-      File.write(dump, JSON.generate(records))
-    else
-      puts "Нет прав на запись в файл #{dump}"
-    end
-  rescue Session::Interrupt
-    nil
-  end
-  
-  def import_db(*)
-    puts
-    print 'Название файла (dump.json) --> '
-
-    dump = Session.get_string
-    dump = 'dump.json' if dump.empty?
-
-    unless File.readable?(dump)
-      puts "Нет прав на чтение файла #{dump}"
-      return
-    end
-
-    records = JSON.parse(File.read(dump))
-    records.each do |filename, data|
-      op = Config::DB_SONGS.find_one_and_update(
-        {filename: filename},
-        {'$set' => data},
-        upsert: true
-      )
-      raise "Failed to import entry for #{filename}" unless op.n == 1
-    end
-  end
-
-  def print_songs_with_options(songs, selected_option_values)
-    max_length = Config::OPTIONS.map { |_, option| option.title }.max.size + 1
-    index_size = songs.size.to_s.size
-
-    songs.each_with_index do |song, index|
-      puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.name}"
-
-      Config::OPTIONS.each do |key, option|
-        rest = song.options.fetch(key, []) - selected_option_values.fetch(key, [])
-        next if rest.empty?
-
-        puts "#{option.title}:#{' '.ljust(max_length - option.title.size)}#{rest.join(', ')}"
-      end
-
-      puts
-    end
-  end
-
-  def print_songs_without_options(songs)
-    index_size = songs.size.to_s.size
-
-    songs.each_with_index do |song, index|
-      puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.name}"
-    end
-  end
-
-  def push_songs(songs)
-    puts
-    puts 'Добавить песни в проигрыватель?'
-    puts 'Номера песен, перечисленные через пробел:'
-
-    selected = select_songs_by_indices(songs).map { |song| song.filepath.inspect }
-
-    if selected.empty?
-      puts 'Не выбраны песни'
-    else
-      Songs::Player.add_songs(*selected)
-
-      puts "Добавлены песни: #{selected.size}"
-    end
-  end
-
-  def select_songs_by_indices(songs)
-    print '--> '
-
-    Session.get_string.split(' ').each_with_object([]) do |index, acc|
-      song = songs[index.to_i - 1]
-      next unless song
-
-      acc << song
-    end
-  end
-
-  def select_and_fill_records(songs)
-    puts 'Номера песен, перечисленные через пробел:'
-
-    selected = select_songs_by_indices(songs)
-
-    if selected.empty?
-      puts 'Не выбраны песни'
-    else
-      selected.each do |model|
-        fill_record(model)
-      end
-
-      puts 'Задача завершена'
-    end
-  end
-
-  def fill_record(model)
-    puts
-    puts "= #{model.name}"
-
-    begin
-      Songs::Player.add_songs(model.filepath.inspect)
-      model.ask
-    rescue Session::Interrupt
-      raise # re-raise exception
-    rescue => e
-      puts e.message, e.backtrace
-    end
   end
 end

@@ -89,8 +89,10 @@ class Config
   end
 
   CONFIG = JSON.parse(File.read("#{__dir__}/../config.json"), symbolize_names: true)
-  MUSIC_DIR = CONFIG[:dir]
-  PLAYLISTS_DIR = CONFIG[:'playlists-dir']
+  LOCAL_MUSIC_DIR = CONFIG[:local][:music]
+  LOCAL_PLAYLISTS_DIR = CONFIG[:local][:playlists]
+  DEVICE_MUSIC_DIR = CONFIG[:portable][:music]
+  DEVICE_PLAYLISTS_DIR = CONFIG[:portable][:playlists]
   IGNORE_DIRECTORIES = (CONFIG[:ignore] || []).map { |dir| dir.end_with?('/') ? dir : "#{dir}/" }
 
   MONGO = Mongo::Client.new(CONFIG[:mongo])

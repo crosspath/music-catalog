@@ -1,0 +1,23 @@
+{
+  "1": {
+    "title": "Управление каталогом музыки",
+    "items": {
+      "1": {"title": "Заполнить все новые записи", "action": "Catalog.UpdateAll"},
+      "2": {"title": "Выбрать новую запись из списка", "action": "Catalog.UpdateOne"},
+      "3": {"title": "Поиск по названию", "action": "Catalog.SearchByName"},
+      "%": {"title": "Назад", "action": "back"}
+    }
+  },
+  "2": {"title": "Подбор музыки по каталогу", "action": "Catalog.SearchByOptions"},
+  "3": {"title": "Создать плэйлисты", "action": "Playlists"},
+  "4": {
+    "title": "Копировать музыку на переносное устройство",
+    "items": {
+      "1": {"title": "Синхронизация", "action": "Device.Sync"},
+      "2": {"title": "Выполнить команду с новыми и изменёнными записями", "action": "Device.Command"}
+    }
+  },
+  "5": {"title": "Экспорт БД", "action": "DB.Export"},
+  "6": {"title": "Импорт БД", "action": "DB.Import"},
+  "!": {"title": "Выход", "action": "back"}
+}

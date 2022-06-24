@@ -1,6 +1,12 @@
 {
-  "dir": "/home/user_name/Music",
-  "playlists-dir": "/home/user_name/Music/Playlists",
+  "local": {
+    "music": "/home/user_name/Music",
+    "playlists": "/home/user_name/Playlists"
+  },
+  "portable": {
+    "music-": "/media/SD-card/Music",
+    "playlists": "/media/SD-card/Playlists"
+  },
   "ignore": [".backup-directory", "any folder or file inside your music directory"],
   "mongo": "mongodb://localhost:27017/music-catalog",
   "tempo": {
