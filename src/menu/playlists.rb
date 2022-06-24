@@ -11,17 +11,18 @@ module Menu
       if File.exist?(save_to)
         if Dir.exist?(save_to)
           puts "Запись в папку #{save_to}:"
+          
+          unless File.writable?(save_to)
+            puts "Нет прав на запись в папку #{save_to}"
+            return
+          end
         else
           puts "По указанному пути найден файл, а не папка"
           return
         end
       else
         puts "Запись в новую папку #{save_to}:"
-      end
-
-      unless File.writable?(save_to)
-        puts "Нет прав на запись в папку #{save_to}"
-        return
+        Session.mkdir(save_to)
       end
 
       puts

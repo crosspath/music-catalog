@@ -52,4 +52,24 @@ module Session
 
     result.chomp
   end
+
+  def ask(question)
+    loop do
+      puts "#{question} (y/n)"
+      case Session.get_char
+      when 'y' then return true
+      when 'n' then return false
+      end
+    end
+  end
+
+  def mkdir(path)
+    parts = path.split(File::SEPARATOR)
+    
+    first = parts.shift
+    parts.each_with_object(first) do |e, a|
+      a << "#{File::SEPARATOR}#{e}"
+      Dir.mkdir(a) unless Dir.exists?(a)
+    end
+  end
 end

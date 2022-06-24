@@ -3,7 +3,7 @@ module Songs
     extend Forwardable
 
     def_delegators :@file, :bpm, :filename
-    def_delegators :@db_entry, :copied?, :match?, :new?, :options
+    def_delegators :@db_entry, :match?, :new?, :options
 
     def initialize(filename, record: nil)
       @file     = Songs::File.new(filename)
@@ -20,6 +20,10 @@ module Songs
       ::File.join(Config::LOCAL_MUSIC_DIR, @file.filename)
     end
 
+    def synced?
+      @db_entry.synced_at && @db_entry.synced_at >= ::File.mtime(filepath)
+    end
+
     def sync(options)
       @db_entry.new? ? create_db_entry(options) : update_db_entry(options)
     end
@@ -34,9 +38,9 @@ module Songs
       sync(options)
     end
 
-    def copy_to_device
+    def sync_with_device
       now = Time.now
-      @db_entry.update(copied_at: now, updated_at: now)
+      @db_entry.update(synced_at: now, updated_at: now)
     end
 
     class << self
