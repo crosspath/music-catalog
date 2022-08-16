@@ -4,7 +4,7 @@
     "playlists": "/home/user_name/Playlists"
   },
   "portable": {
-    "music-": "/media/SD-card/Music",
+    "music": "/media/SD-card/Music",
     "playlists": "/media/SD-card/Playlists"
   },
   "ignore": [".backup-directory", "any folder or file inside your music directory"],

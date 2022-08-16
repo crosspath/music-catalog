@@ -44,7 +44,11 @@ module Songs
 
     def sync_with_device
       now = Time.now
-      @db_entry.update(synced_at: now, updated_at: now)
+      if @db_entry.new?
+        @db_entry.create(bpm: @file.bpm, synced_at: now, updated_at: now)
+      else
+        @db_entry.update(synced_at: now, updated_at: now)
+      end
     end
 
     class << self
