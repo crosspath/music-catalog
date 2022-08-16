@@ -9,6 +9,10 @@
   },
   "ignore": [".backup-directory", "any folder or file inside your music directory"],
   "mongo": "mongodb://localhost:27017/music-catalog",
+  "player": {
+    "os": "linux",
+    "command": "clementine --quiet -a %{files} 2>/dev/null"
+  },
   "tempo": {
     "slow": "0...90",
     "average": "90...130",

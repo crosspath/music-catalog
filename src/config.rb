@@ -98,6 +98,13 @@ class Config
   MONGO = Mongo::Client.new(CONFIG[:mongo])
   DB_SONGS = MONGO[:songs]
 
+  # 2>/dev/null -- не показывать сообщения Clementine об ошибках.
+  PLAYER = (CONFIG[:player] || {}).tap do |hash|
+    hash[:os] ||= 'linux'
+    hash[:command] ||= 'clementine --quiet -a %{files} 2>/dev/null'
+    hash[:path] ||= LOCAL_MUSIC_DIR
+  end
+
   TEMPO = (CONFIG[:tempo] || {}).transform_values { |value| Tempo.new(value) }
   OPTIONS = (CONFIG[:options] || {}).transform_values { |hash| Option.new(hash) }
   PLAYLISTS = (CONFIG[:playlists] || []).map { |hash| Playlist.new(hash) }

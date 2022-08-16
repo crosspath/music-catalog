@@ -1,19 +1,29 @@
 module Menu
   module Catalog
     module Output
+      def max_option_name_length
+        @max_option_name_length ||= Config::OPTIONS.map { |_, option| option.title }.max.size + 1
+      end
+
+      def print_options(song, selected_option_values = {})
+        Config::OPTIONS.each do |key, option|
+          rest = song.options.fetch(key, []) - selected_option_values.fetch(key, [])
+          next if rest.empty?
+
+          puts "#{option.title}:#{' '.ljust(max_option_name_length - option.title.size)}#{rest.join(', ')}"
+        end
+      end
+
+      def print_title(song, index, index_size = 1)
+        puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.name}"
+      end
+
       def print_songs_with_options(songs, selected_option_values)
-        max_length = Config::OPTIONS.map { |_, option| option.title }.max.size + 1
         index_size = songs.size.to_s.size
 
         songs.each_with_index do |song, index|
-          puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.name}"
-
-          Config::OPTIONS.each do |key, option|
-            rest = song.options.fetch(key, []) - selected_option_values.fetch(key, [])
-            next if rest.empty?
-
-            puts "#{option.title}:#{' '.ljust(max_length - option.title.size)}#{rest.join(', ')}"
-          end
+          print_title(song, index, index_size)
+          print_options(song, selected_option_values)
 
           puts
         end
@@ -23,7 +33,7 @@ module Menu
         index_size = songs.size.to_s.size
 
         songs.each_with_index do |song, index|
-          puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.name}"
+          print_title(song, index, index_size)
         end
       end
     end
@@ -42,7 +52,7 @@ module Menu
     end
 
     module SelectAndUpdate
-      include SelectByIndex
+      include Output, SelectByIndex
 
       def select_and_fill_records(songs)
         puts 'Номера песен, перечисленные через пробел:'
@@ -64,8 +74,13 @@ module Menu
         puts
         puts "= #{model.name}"
 
+        unless model.options.empty?
+          print_options(model)
+          puts
+        end
+
         begin
-          Songs::Player.add_songs(model.filepath.inspect)
+          Songs::Player.add_songs(model.filename)
           model.ask
         rescue Session::Interrupt
           raise # re-raise exception
@@ -80,7 +95,7 @@ module Menu
 
       def self.call
         Songs::Model.scan.each do |model|
-          next unless model.new?
+          next if model.with_options?
 
           fill_record(model)
         end
@@ -90,13 +105,13 @@ module Menu
     end
 
     module UpdateOne
-      extend Output, SelectAndUpdate
+      extend SelectAndUpdate
 
       def self.call
         puts
         puts 'Проверка файлов...'
 
-        songs = Songs::Model.scan.select(&:new?)
+        songs = Songs::Model.scan.reject(&:with_options?)
 
         if songs.empty?
           puts 'Нет новых записей'
@@ -113,7 +128,7 @@ module Menu
     end
 
     module SearchByName
-      extend Output, SelectAndUpdate
+      extend SelectAndUpdate
 
       def self.call
         puts
@@ -199,7 +214,7 @@ module Menu
         puts 'Добавить песни в проигрыватель?'
         puts 'Номера песен, перечисленные через пробел:'
 
-        selected = select_songs_by_indices(songs).map { |song| song.filepath.inspect }
+        selected = select_songs_by_indices(songs).map(&:filename)
 
         if selected.empty?
           puts 'Не выбраны песни'

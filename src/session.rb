@@ -65,7 +65,7 @@ module Session
 
   def mkdir(path)
     parts = path.split(File::SEPARATOR)
-    
+
     first = parts.shift
     parts.each_with_object(first) do |e, a|
       a << "#{File::SEPARATOR}#{e}"

@@ -20,6 +20,10 @@ module Songs
       ::File.join(Config::LOCAL_MUSIC_DIR, @file.filename)
     end
 
+    def with_options?
+      !@db_entry.options.empty?
+    end
+
     def synced?
       @db_entry.synced_at && @db_entry.synced_at >= ::File.mtime(filepath)
     end
