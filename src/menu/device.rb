@@ -110,8 +110,29 @@ module Menu
     end
 
     module Command
-      def self.call
-        DEVICE_DIR
+      def self.songs_list
+        Songs::Model.scan.reject(&:synced?).map(&:filename)
+      end
+
+      module Picard
+        def self.call
+          songs = Menu::Device::Command.songs_list
+          Session.command("picard %{files}", songs)
+        end
+      end
+
+      module MP3Gain
+        def self.call
+          songs = Menu::Device::Command.songs_list
+          Session.command("mp3gain -e -r -p -q %{files}", songs)
+        end
+      end
+
+      module Player
+        def self.call
+          songs = Menu::Device::Command.songs_list
+          Songs::Player.add_songs(songs)
+        end
       end
     end
   end

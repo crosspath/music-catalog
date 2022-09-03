@@ -80,7 +80,7 @@ module Menu
         end
 
         begin
-          Songs::Player.add_songs(model.filename)
+          Songs::Player.add_songs([model.filename])
           model.ask
         rescue Session::Interrupt
           raise # re-raise exception
@@ -219,7 +219,7 @@ module Menu
         if selected.empty?
           puts 'Не выбраны песни'
         else
-          Songs::Player.add_songs(*selected)
+          Songs::Player.add_songs(selected)
 
           puts "Добавлены песни: #{selected.size}"
         end

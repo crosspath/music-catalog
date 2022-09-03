@@ -14,7 +14,9 @@
     "title": "Копировать музыку на переносное устройство",
     "items": {
       "1": {"title": "Синхронизация", "action": "Device.Sync"},
-      "2": {"title": "Выполнить команду с новыми и изменёнными записями", "action": "Device.Command"},
+      "2": {"title": "Проставить теги в Picard для новых и изменённых записей", "action": "Device.Command.Picard"},
+      "3": {"title": "Нормализовать громкость в mp3gain для новых и изменённых записей", "action": "Device.Command.MP3Gain"},
+      "4": {"title": "Добавить в проигрыватель новые и изменённые записи", "action": "Device.Command.Player"},
       "%": {"title": "Назад", "action": "back"}
     }
   },

@@ -72,4 +72,17 @@ module Session
       Dir.mkdir(a) unless Dir.exists?(a)
     end
   end
+
+  def command(tpl, files)
+    windows = Config::PLAYER[:os] == 'windows'
+
+    files = files.map { |x| x.gsub('/', '\\') } if windows
+    files = files.map { |x| "#{Config::PLAYER[:path]}#{windows ? '\\' : '/'}#{x}".inspect }
+
+    str = sprintf(tpl, files: files.join(' '))
+
+    # pgroup: true -- отвязать экземпляр проигрывателя от процесса Ruby,
+    # чтобы при остановке Ruby продолжил работать процесс проигрывателя.
+    spawn(str, pgroup: true)
+  end
 end
