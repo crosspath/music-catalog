@@ -3,7 +3,7 @@ class Config
     def range
       @range ||= value.match(/\A(\d+)?(\.+)(\d+)?\Z/).then do |m|
         include_end = m[2].size == 2
-        Range.new(m[1], m[3], !include_end)
+        Range.new(m[1]&.to_f, m[3]&.to_f, !include_end)
       end
     end
 
@@ -51,42 +51,7 @@ class Config
     end
   end
 
-  Playlist = Struct.new(:name, :options, keyword_init: true) do
-    def filters
-      @filters ||= options.map { |hash| PlaylistFilter.new(hash) }
-    end
-  end
-
-  PlaylistFilter = Struct.new(:hash) do
-    def matcher(options_hash)
-      options_hash.each_with_object([]) do |(k, _), a|
-        if hash.key?(k)
-          a << (hash[k].empty? ? ->(song) { empty_list?(song, k) } : ->(song) { any_of?(song, k) })
-        end
-
-        ignore = :"-#{k}"
-        if hash.key?(ignore)
-          a << (
-            hash[ignore].empty? ?
-            ->(song) { !empty_list?(song, k) }
-            : ->(song) { none_of?(song, k) }
-          )
-        end
-      end
-    end
-
-    def empty_list?(song, attr_name)
-      song[attr_name].empty?
-    end
-
-    def any_of?(song, attr_name)
-      (song[attr_name] & hash[attr_name]).size > 0
-    end
-
-    def none_of?(song, attr_name)
-      (song[attr_name] & hash[:"-#{attr_name}"]).size == 0
-    end
-  end
+  Playlist = Struct.new(:name, :options, keyword_init: true)
 
   CONFIG = JSON.parse(File.read("#{__dir__}/../config.json"), symbolize_names: true)
   LOCAL_MUSIC_DIR = CONFIG[:local][:music]

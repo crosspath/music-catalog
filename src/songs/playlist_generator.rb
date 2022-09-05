@@ -3,8 +3,7 @@ module Songs
     def initialize(config, songs, save_to)
       @config  = config
       @save_to = save_to
-      matchers = config.filters.map { |f| f.matcher(Config::OPTIONS) }
-      @entries = songs.filter_map { |model| model.filename if model.match?(matchers) }
+      @entries = songs.filter_map { |model| model.filename if model.match?(config.options) }
     end
 
     def result

@@ -34,6 +34,10 @@
   "playlists": [
     {
       "name": "no tags",
+      "options": [{"-tags": []}]
+    },
+    {
+      "name": "any tags",
       "options": [{"tags": []}]
     },
     {

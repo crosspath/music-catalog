@@ -2,7 +2,7 @@ module Songs
   class Model
     extend Forwardable
 
-    def_delegators :@file, :bpm, :filename
+    def_delegators :@file, :filename
     def_delegators :@db_entry, :match?, :new?, :options
 
     def initialize(filename, record: nil)
@@ -10,6 +10,10 @@ module Songs
       @db_entry = Songs::DbEntry.new(record || Config::DB_SONGS.find(filename: filename).first)
 
       @db_entry.filename = filename
+    end
+
+    def bpm
+      @db_entry.bpm ||= @file.bpm
     end
 
     def name
@@ -33,10 +37,10 @@ module Songs
     end
 
     def ask
-      options = Config::OPTIONS.transform_values do |option|
-        selected = fill_option(option)
+      options = Config::OPTIONS.each_with_object({}) do |(key, option), acc|
+        selected = fill_option(key.to_s, option)
         return unless selected
-        selected
+        acc[key] = selected
       end
 
       sync(options)
@@ -45,7 +49,7 @@ module Songs
     def sync_with_device
       now = Time.now
       if @db_entry.new?
-        @db_entry.create(bpm: @file.bpm, synced_at: now, updated_at: now)
+        @db_entry.create(bpm: bpm, synced_at: now, updated_at: now)
       else
         @db_entry.update(synced_at: now, updated_at: now)
       end
@@ -117,10 +121,14 @@ module Songs
       @db_entry.update(options: options)
     end
 
-    def fill_option(option)
+    def fill_option(key, option)
       loop do
         puts "- #{option.title} -"
-        Session.print_columns(option.items_with_keys_as_array)
+        options_to_output = option.items_with_keys_as_hash.each_with_object({items: [], underline: []}) do |(k, v), acc|
+          acc[:items] << "#{k}. #{v}"
+          acc[:underline] << acc[:items].size - 1 if @db_entry.options[key]&.include?(v)
+        end
+        Session.print_columns(**options_to_output)
         selected = option.items_for_keys(Session.get_string)
 
         unless option.valid_count?(selected.size)

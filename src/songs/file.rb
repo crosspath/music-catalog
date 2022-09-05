@@ -10,11 +10,12 @@ module Songs
 
     def bpm
       @bpm ||= begin
-        output = `bpm-tag -f -n #{@filename.inspect} 2>&1`
+        path   = ::File.join(Config::LOCAL_MUSIC_DIR, @filename)
+        output = `bpm-tag -f -n #{path.inspect} 2>&1`
         match  = output.match(RE_BPM)
 
         raise RuntimeError.new(output) unless match
-        match[1]
+        match[1].to_f
       end
     end
   end

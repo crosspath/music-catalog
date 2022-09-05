@@ -7,12 +7,22 @@ module Session
 
   module_function
 
-  def print_columns(items)
+  def print_columns(items: [], underline: [])
     max_length = items.max_by(&:size).size
 
     count = count_items_in_line(max_length)
     if max_length < Session.columns && items.size > count
-      items = items.map { |item| item.ljust(max_length) }
+      items = items.map.with_index do |item, index|
+        if underline.include?(index)
+          negate_output(item).ljust(max_length + 8)
+        else
+          item.ljust(max_length)
+        end
+      end
+    else
+      items = items.map.with_index do |item, index|
+        underline.include?(index) ? negate_output(item) : item
+      end
     end
 
     items.each_slice(count) do |row|
@@ -43,6 +53,10 @@ module Session
     c = STDIN.getch
     raise Interrupt if ["\u0003", "\u0004"].include?(c) # Ctrl+C, Ctrl+D
     c
+  end
+
+  def negate_output(str)
+    "\e[7m#{str}\e[0m"
   end
 
   def get_string

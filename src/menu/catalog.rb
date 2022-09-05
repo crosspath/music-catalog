@@ -1,32 +1,40 @@
 module Menu
   module Catalog
     module Output
-      def max_option_name_length
-        @max_option_name_length ||= Config::OPTIONS.map { |_, option| option.title }.max.size + 1
-      end
-
-      def print_options(song, selected_option_values = {})
-        Config::OPTIONS.each do |key, option|
-          rest = song.options.fetch(key, []) - selected_option_values.fetch(key, [])
-          next if rest.empty?
-
-          puts "#{option.title}:#{' '.ljust(max_option_name_length - option.title.size)}#{rest.join(', ')}"
-        end
-      end
-
       def print_title(song, index, index_size = 1)
         puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.name}"
+      end
+
+      def bpm(song)
+        text = Config::TEMPO.find { |_, tempo| tempo.match?(song.bpm) }&.first || 'н/д'
+        "#{song.bpm} bpm (#{text})"
       end
 
       def print_songs_with_options(songs, selected_option_values)
         index_size = songs.size.to_s.size
 
-        songs.each_with_index do |song, index|
-          print_title(song, index, index_size)
-          print_options(song, selected_option_values)
+        table_headers = ConsoleOutput::Row.new(
+          [
+            ConsoleOutput::Cell.new('#'),
+            ConsoleOutput::Cell.new('Название'),
+            ConsoleOutput::Cell.new('BPM')
+          ] + Config::OPTIONS.map { |(_key, option)| ConsoleOutput::Cell.new(option.title) }
+        )
 
-          puts
+        table_body = songs.map.with_index do |song, index|
+          ConsoleOutput::Row.new(
+            [
+              ConsoleOutput::Cell.new((index + 1).to_s.rjust(index_size, '0')),
+              ConsoleOutput::Cell.new(song.name),
+              ConsoleOutput::Cell.new(song.new? ? '' : bpm(song))
+            ] + Config::OPTIONS.map do |(key, _option)|
+              ConsoleOutput::Cell.new(song.options.fetch(key, []).join(', '))
+            end
+          )
         end
+
+        table = ConsoleOutput::Table.new([table_headers] + table_body)
+        table.print(Session.columns)
       end
 
       def print_songs_without_options(songs)
@@ -73,11 +81,8 @@ module Menu
       def fill_record(model)
         puts
         puts "= #{model.name}"
-
-        unless model.options.empty?
-          print_options(model)
-          puts
-        end
+        puts bpm(model)
+        puts
 
         begin
           Songs::Player.add_songs([model.filename])
@@ -148,7 +153,8 @@ module Menu
         if found.empty?
           puts 'Не найдены песни'
         else
-          print_songs_without_options(found)
+          # print_songs_without_options(found)
+          print_songs_with_options(found, {})
 
           puts
           puts 'Какие записи необходимо заполнить или изменить?'
@@ -167,13 +173,18 @@ module Menu
 
         songs = Songs::Model.all.reject(&:new?)
 
+        tempo_items = Config::TEMPO.map { |text, t| [text, "#{text}, #{t.range}"] }.to_h
+        tempo       = Config::Option.new(title: 'BPM', select: '0..1', items: tempo_items.values)
+
+        all_options = [tempo] + Config::OPTIONS.values
+
         loop do
           puts
           puts 'Условия поиска:'
 
-          Config::OPTIONS.each do |_, option|
+          all_options.each do |option|
             puts "- #{option.title} -"
-            Session.print_columns(option.items_with_keys_as_array)
+            Session.print_columns(items: option.items_with_keys_as_array)
             puts
           end
 
@@ -182,17 +193,24 @@ module Menu
           print '--> '
 
           values  = Session.get_string.split(' ')
-          filters = []
+          filters = {}
 
           selected_option_values = {}
 
           return if values.empty?
 
-          Config::OPTIONS.each.with_index do |(k, option), index|
-            next if values[index] == '-'
+          puts
 
-            selected = option.items_for_keys(values[index])
-            filters << ->(song) { (song[k] & selected).size > 0 }
+          unless values[0] == '-'
+            filters[:tempo] = tempo.items_for_keys(values[0]).map { |text| tempo_items.key(text) }
+          end
+
+          Config::OPTIONS.each.with_index do |(k, option), index|
+            index += 1
+            next if values[index] == '-' || !values[index]
+
+            selected   = option.items_for_keys(values[index])
+            filters[k] = selected
 
             selected_option_values[k] = selected
           end
