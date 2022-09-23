@@ -78,7 +78,7 @@ module Menu
         device_abs_dir = ::File.realpath(Config::DEVICE_MUSIC_DIR)
         skip           = device_abs_dir.size + 1
 
-        songs = Songs::Model.scan
+        songs = Songs::Repo.scan
         songs_to_copy = songs.reject(&:synced?)
 
         on_device = Dir[File.join(device_abs_dir, '**/*')].reject { |x| File.directory?(x) }
@@ -111,7 +111,7 @@ module Menu
 
     module Command
       def self.songs_list
-        Songs::Model.scan.reject(&:synced?).map(&:filename)
+        Songs::Repo.scan.reject(&:synced?).map(&:filename)
       end
 
       module Picard

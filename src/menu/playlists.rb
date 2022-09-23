@@ -8,7 +8,7 @@ module Menu
       puts 'Проверка файлов...'
       puts
 
-      songs = Songs::Model.all.reject(&:new?)
+      songs = Songs::Repo.all.reject(&:new?)
 
       if File.exist?(save_to)
         if Dir.exist?(save_to)

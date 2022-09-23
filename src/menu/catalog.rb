@@ -81,12 +81,11 @@ module Menu
       def fill_record(model)
         puts
         puts "= #{model.name}"
-        puts bpm(model)
         puts
 
         begin
           Songs::Player.add_songs([model.filename])
-          model.ask
+          Songs::FillOptions.call(model)
         rescue Session::Interrupt
           raise # re-raise exception
         rescue => e
@@ -99,7 +98,7 @@ module Menu
       extend SelectAndUpdate
 
       def self.call
-        Songs::Model.scan.each do |model|
+        Songs::Repo.scan.each do |model|
           next if model.with_options?
 
           fill_record(model)
@@ -113,10 +112,7 @@ module Menu
       extend SelectAndUpdate
 
       def self.call
-        puts
-        puts 'Проверка файлов...'
-
-        songs = Songs::Model.scan.reject(&:with_options?)
+        songs = Songs::Repo.scan.reject(&:with_options?)
 
         if songs.empty?
           puts 'Нет новых записей'
@@ -136,10 +132,7 @@ module Menu
       extend SelectAndUpdate
 
       def self.call
-        puts
-        puts 'Проверка файлов...'
-
-        songs = Songs::Model.scan
+        songs = Songs::Repo.scan
 
         puts
         puts 'Поиск песни по части имени файла:'
@@ -171,7 +164,7 @@ module Menu
         puts
         puts 'Проверка файлов...'
 
-        songs = Songs::Model.all.reject(&:new?)
+        songs = Songs::Repo.all.reject(&:new?)
 
         tempo_items = Config::TEMPO.map { |text, t| [text, "#{text}, #{t.range}"] }.to_h
         tempo       = Config::Option.new(title: 'BPM', select: '0..1', items: tempo_items.values)

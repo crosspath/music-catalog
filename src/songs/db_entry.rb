@@ -1,7 +1,13 @@
 module Songs
   class DbEntry
+    def self.new_by_filename(filename)
+      hash = Config::DB_SONGS.find(filename: filename).first
+
+      new(hash || {filename: filename})
+    end
+
     def initialize(hash)
-      @record = hash || {}
+      @record             = hash || {}
       @record[:options] ||= {}
     end
 
