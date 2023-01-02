@@ -55,7 +55,7 @@ module Songs
 
           manual_bpm = 60 / (Time.now - start) * 4
 
-          res = [0.5, 0.67, 1, 1.5, 2].min { |coeff| (manual_bpm - algo_bpm * coeff).abs } * algo_bpm
+          res = [0.5, 0.67, 1, 1.5, 2].min_by { |coeff| (manual_bpm - algo_bpm * coeff).abs } * algo_bpm
 
           puts
           puts "Значение BPM определено как #{res} (#{bpm_text(res)})"

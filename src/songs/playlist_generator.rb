@@ -4,6 +4,8 @@ module Songs
       @config  = config
       @save_to = save_to
       @entries = songs.filter_map { |model| model.filename if model.match?(config.options) }
+
+      @entries.sort_by! { |file_name| File.basename(file_name) }
     end
 
     def result
