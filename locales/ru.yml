@@ -1,0 +1,76 @@
+ru:
+  config:
+    option:
+      unknown_char: 'Неизвестный ключ: %{char}'
+  menu:
+    catalog:
+      action_finished: Задача завершена
+      check_files: Проверка файлов...
+      filter_options: 'Условия поиска:'
+      find_song_by_name: |
+        Поиск песни по части имени файла:
+        --> 
+      fill_song_options: >
+        Укажите буквенно-цифровые ключи для каждой группы меток. Для пропуска используйте знак "-".
+        Ключи для каждой группы указываются слитно, группы разделены пробелом.
+      name: Название
+      no_data: н/д
+      no_new_songs: Нет новых записей
+      song_indices: |
+        Номера песен, перечисленные через пробел:
+        --> 
+      songs_added: 'Добавлены песни: %{count}'
+      songs_not_found: Не найдены песни
+      songs_not_found_by_filter: Не найдены песни по указанным фильтрам
+      songs_not_selected: Не выбраны песни
+      which_options: |
+        Пример ввода: 1 2 1
+        Знак "-" можно использовать для пропуска условия
+        --> 
+      which_new_songs: Какие новые записи необходимо заполнить?
+      which_songs: Какие записи необходимо заполнить или изменить?
+      which_songs_add_to_player: Добавить песни в проигрыватель?
+    device:
+      action_finished: Задача завершена
+      check_files: Проверка файлов...
+      copying: 'Копирование:'
+      do_sync_playlists: Синхронизировать плэйлисты?
+      do_sync_songs: Синхронизировать список песен?
+      removing: 'Удаление:'
+      show_list: Показать список?
+      songs_to_copy: 'Сколько песен выбрано для копирования: %{count}'
+      songs_to_remove: 'Сколько песен выбрано для удаления: %{count}'
+    db:
+      export:
+        cannot_write: 'Нет прав на запись в файл %{filename}'
+        filename: 'Название файла (%{filename}) --> '
+      import:
+        cannot_read: 'Нет прав на чтение файла %{filename}'
+        filename: 'Название файла (%{filename}) --> '
+    playlists:
+      cannot_write: 'Нет прав на запись в папку %{path}'
+      check_files: Проверка файлов...
+      copy_to_dir: 'Запись в папку %{path}:'
+      copy_to_new_dir: 'Запись в новую папку %{path}:'
+      is_not_dir: По указанному пути найден файл, а не папка
+      skipped: пропущен, песни по фильтрам не найдены
+    unknown_action: Неизвестное действие!
+  songs:
+    db_entry:
+      cannot_create: 'Не удаётся создать запись для файла %{filename}'
+      cannot_update: 'Не удаётся обновить запись для файла %{filename}'
+    fill_options:
+      bpm:
+        auto: 'Автоматически определённое значение: %{bpm} (%{label})'
+        menu:
+          next: Перейти к следующей песне
+          repeat: Повторить
+          unknown_action: Неизвестное действие!
+        no_data: н/д
+        repeat: 'Ещё раз... '
+        result: 'Значение BPM определено как %{bpm} (%{label})'
+        start: |
+          Нажмите клавишу пробела, буквы или цифры в момент начала первой четверти такта... 
+      required_count: 'Должно быть выбрано значений: %{count}'
+    repo:
+      scanning: 'Изучение файлов (%{count})'

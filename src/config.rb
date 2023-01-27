@@ -46,7 +46,7 @@ class Config
     def items_for_keys(input)
       ki = items_with_keys_as_hash
       input.each_char.map do |char|
-        ki[char] || raise(Session::InvalidInput, "Unknown key: #{char}")
+        ki[char] || raise(Session::InvalidInput, I18n.t('config.option.unknown_char', char: char))
       end
     end
   end
@@ -73,4 +73,7 @@ class Config
   TEMPO = (CONFIG[:tempo] || {}).transform_values { |value| Tempo.new(value) }
   OPTIONS = (CONFIG[:options] || {}).transform_values { |hash| Option.new(hash) }
   PLAYLISTS = (CONFIG[:playlists] || []).map { |hash| Playlist.new(hash) }
+
+  I18n.load_path += Dir[File.expand_path('locales') + '/*.yml']
+  I18n.default_locale = CONFIG[:locale]
 end

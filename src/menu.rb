@@ -27,7 +27,7 @@ module Menu
           menu_module.call
         end
       else
-        puts 'Неизвестное действие!'
+        puts I18n.t('menu.unknown_action')
       end
     end
   rescue Session::Interrupt

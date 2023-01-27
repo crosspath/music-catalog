@@ -3,25 +3,25 @@ module Menu
     module Sync
       def self.call
         puts
-        puts 'Проверка файлов...'
+        puts I18n.t('menu.device.check_files')
         puts
 
         songs_to_copy, files_to_remove = prepare_lists
 
         have_changes = !songs_to_copy.empty? || !files_to_remove.empty?
 
-        if have_changes && Session.ask('Синхронизировать список песен?')
-          device_dir = ::File.realpath(Config::DEVICE_MUSIC_DIR)
-          local_dir  = ::File.realpath(Config::LOCAL_MUSIC_DIR)
+        if have_changes && Session.ask(I18n.t('menu.device.do_sync_songs'))
+          device_dir = File.realpath(Config::DEVICE_MUSIC_DIR)
+          local_dir  = File.realpath(Config::LOCAL_MUSIC_DIR)
 
-          puts '', 'Удаление:' unless files_to_remove.empty?
+          puts '', I18n.t('menu.device.removing') unless files_to_remove.empty?
 
           files_to_remove.each do |file_name|
             puts file_name
             File.delete(File.join(device_dir, file_name))
           end
 
-          puts '', 'Копирование:' unless songs_to_copy.empty?
+          puts '', I18n.t('menu.device.copying') unless songs_to_copy.empty?
 
           songs_to_copy.each do |song|
             file_name     = song.filename
@@ -35,7 +35,7 @@ module Menu
           puts
         end
 
-        if Session.ask('Синхронизировать плэйлисты?')
+        if Session.ask(I18n.t('menu.device.do_sync_playlists'))
           Menu::Playlists.call
           Session.mkdir(Config::DEVICE_PLAYLISTS_DIR)
 
@@ -69,13 +69,13 @@ module Menu
         end
 
         puts
-        puts 'Задача завершена'
+        puts I18n.t('menu.device.action_finished')
       rescue Session::Interrupt
         nil
       end
 
       def self.prepare_lists
-        device_abs_dir = ::File.realpath(Config::DEVICE_MUSIC_DIR)
+        device_abs_dir = File.realpath(Config::DEVICE_MUSIC_DIR)
         skip           = device_abs_dir.size + 1
 
         songs = Songs::Repo.scan
@@ -87,11 +87,11 @@ module Menu
           songs.none? { |song| song.filename == x } && x
         end
 
-        puts "Сколько песен выбрано для копирования: #{songs_to_copy.size}"
+        puts I18n.t('menu.device.songs_to_copy', count: songs_to_copy.size)
 
         print_list(songs_to_copy, &:filename)
 
-        puts "Сколько песен выбрано для удаления: #{files_to_remove.size}"
+        puts I18n.t('menu.device.songs_to_remove', count: files_to_remove.size)
 
         print_list(files_to_remove, &:itself)
 
@@ -99,7 +99,7 @@ module Menu
       end
 
       def self.print_list(list)
-        return if list.empty? || !Session.ask('Показать список?')
+        return if list.empty? || !Session.ask(I18n.t('menu.device.show_list'))
 
         puts
 

@@ -5,7 +5,7 @@ module Menu
         default_path = File.join(File.realpath(Config::LOCAL_MUSIC_DIR), 'dump.json')
 
         puts
-        print "Название файла (#{default_path}) --> "
+        print I18n.t('menu.db.export.filename', filename: default_path)
 
         dump = Session.get_string
         dump = default_path if dump.empty?
@@ -17,7 +17,7 @@ module Menu
 
           File.write(dump, JSON.generate(records))
         else
-          puts "Нет прав на запись в файл #{dump}"
+          puts I18n.t('menu.db.export.cannot_write', filename: dump)
         end
       rescue Session::Interrupt
         nil
@@ -29,13 +29,13 @@ module Menu
         default_path = File.join(File.realpath(Config::LOCAL_MUSIC_DIR), 'dump.json')
 
         puts
-        print "Название файла (#{default_path}) --> "
+        print I18n.t('menu.db.import.filename', filename: default_path)
 
         dump = Session.get_string
         dump = default_path if dump.empty?
 
         unless File.readable?(dump)
-          puts "Нет прав на чтение файла #{dump}"
+          puts I18n.t('menu.db.export.cannot_read', filename: dump)
           return
         end
 

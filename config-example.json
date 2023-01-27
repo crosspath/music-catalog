@@ -1,4 +1,5 @@
 {
+  "locale": "ru",
   "local": {
     "music": "/home/user_name/Music",
     "playlists": "/home/user_name/Playlists"

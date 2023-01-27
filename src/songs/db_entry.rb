@@ -75,7 +75,7 @@ module Songs
       @record.merge!(new_values)
 
       unless Config::DB_SONGS.insert_one(@record).n == 1
-        raise "Failed to create entry for #{@record[:filename]}"
+        raise I18n.t('songs.db_entry.cannot_create', filename: @record[:filename])
       end
     end
 
@@ -87,7 +87,7 @@ module Songs
       finder = {filename: @record[:filename]}
 
       unless Config::DB_SONGS.update_one(finder, @record).n == 1
-        raise "Failed to update entry for #{@record[:filename]}"
+        raise I18n.t('songs.db_entry.cannot_update', filename: @record[:filename])
       end
     end
   end

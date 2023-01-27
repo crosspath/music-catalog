@@ -36,7 +36,7 @@ module Songs
         counter       = 0
         filenames     = []
 
-        print "Изучение файлов (#{new_songs.size})" if show_progress
+        print I18n.t('songs.repo.scanning', count: new_songs.size) if show_progress
 
         models.each do |model|
           filenames << model.filename

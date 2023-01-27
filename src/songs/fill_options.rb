@@ -28,7 +28,8 @@ module Songs
           selected = option.items_for_keys(Session.get_string)
 
           unless option.valid_count?(selected.size)
-            raise Session::InvalidInput, "Required: #{option.select_range} items"
+            text = I18n.t('songs.fill_options.required_count', count: option.select_range)
+            raise Session::InvalidInput, text
           end
 
           return selected
@@ -42,12 +43,12 @@ module Songs
         res      = nil
 
         puts '- BPM -'
-        puts "Автоматически определённое значение: #{song.bpm} (#{bpm_text(algo_bpm)})"
+        puts I18n.t('songs.fill_options.bpm.auto', bpm: song.bpm, label: bpm_text(algo_bpm))
 
         loop do
-          print 'Нажмите клавишу пробела, буквы или цифры в момент начала первой четверти такта... '
+          print I18n.t('songs.fill_options.bpm.start')
           STDIN.getch
-          print 'Ещё раз... '
+          print I18n.t('songs.fill_options.bpm.repeat')
 
           start = Time.now
 
@@ -58,7 +59,7 @@ module Songs
           res = [0.5, 0.67, 1, 1.5, 2].min_by { |coeff| (manual_bpm - algo_bpm * coeff).abs } * algo_bpm
 
           puts
-          puts "Значение BPM определено как #{res} (#{bpm_text(res)})"
+          puts I18n.t('songs.fill_options.bpm.result', bpm: res, label: bpm_text(res))
 
           break unless repeat_calc_bpm?
         end
@@ -69,20 +70,21 @@ module Songs
       def repeat_calc_bpm?
         loop do
           puts
-          puts '1. Повторить'
-          puts '2. Перейти к следующей песне'
+          puts "1. #{I18n.t('songs.fill_options.bpm.menu.repeat')}"
+          puts "2. #{I18n.t('songs.fill_options.bpm.menu.next')}"
 
           case Session.get_char
           when '1' then return true
           when '2' then return false
           else
-            puts 'Неизвестное действие!'
+            puts I18n.t('songs.fill_options.bpm.menu.unknown_action')
           end
         end
       end
 
       def bpm_text(value)
-        Config::TEMPO.find { |_, tempo| tempo.match?(value) }&.first || 'н/д'
+        text = Config::TEMPO.find { |_, tempo| tempo.match?(value) }&.first
+        text || I18n.t('songs.fill_options.bpm.no_data')
       end
     end
   end
