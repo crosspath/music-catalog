@@ -26,6 +26,10 @@ module Songs
       record.bpm || @file.bpm
     end
 
+    def file_bpm
+      @file.bpm
+    end
+
     def name
       @name ||= @file.filename[0..(-1 - ::File.extname(@file.filename).size)]
     end

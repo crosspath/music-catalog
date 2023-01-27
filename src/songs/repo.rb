@@ -1,5 +1,7 @@
 module Songs
   module Repo
+    TEXT = LocaleText.for_scope('songs.repo')
+
     class << self
       attr_reader :cache
 
@@ -36,7 +38,7 @@ module Songs
         counter       = 0
         filenames     = []
 
-        print I18n.t('songs.repo.scanning', count: new_songs.size) if show_progress
+        print TEXT.scanning(count: new_songs.size) if show_progress
 
         models.each do |model|
           filenames << model.filename

@@ -3,9 +3,10 @@
 require 'rubygems'
 require 'bundler/setup'
 
+require 'i18n'
+require 'io/console'
 require 'json'
 require 'mongo'
-require 'io/console'
 
 #----
 

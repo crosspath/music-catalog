@@ -1,5 +1,7 @@
 module Menu
   module Catalog
+    TEXT = LocaleText.for_scope('menu.catalog')
+
     module Output
       def print_title(song, index, index_size = 1)
         puts "#{(index + 1).to_s.rjust(index_size, '0')}. #{song.name}"
@@ -7,17 +9,17 @@ module Menu
 
       def bpm(song)
         text = Config::TEMPO.find { |_, tempo| tempo.match?(song.bpm) }&.first
-        text ||= I18n.t('menu.catalog.no_data')
+        text ||= TEXT.no_data
         "#{song.bpm} bpm (#{text})"
       end
 
-      def print_songs_with_options(songs, selected_option_values)
+      def print_songs_with_options(songs)
         index_size = songs.size.to_s.size
 
         table_headers = ConsoleOutput::Row.new(
           [
             ConsoleOutput::Cell.new('#'),
-            ConsoleOutput::Cell.new(I18n.t('menu.catalog.name')),
+            ConsoleOutput::Cell.new(TEXT.name),
             ConsoleOutput::Cell.new('BPM')
           ] + Config::OPTIONS.map { |(_key, option)| ConsoleOutput::Cell.new(option.title) }
         )
@@ -49,7 +51,7 @@ module Menu
 
     module SelectByIndex
       def select_songs_by_indices(songs)
-        print I18n.t('menu.catalog.song_indices')
+        print TEXT.song_indices
 
         Session.get_string.split(' ').each_with_object([]) do |index, acc|
           song = songs[index.to_i - 1]
@@ -66,14 +68,17 @@ module Menu
       def select_and_fill_records(songs)
         selected = select_songs_by_indices(songs)
 
+        puts
+
         if selected.empty?
-          puts I18n.t('menu.catalog.songs_not_selected')
+          puts TEXT.songs_not_selected
         else
-          puts I18n.t('menu.catalog.fill_song_options')
+          puts TEXT.fill_song_options
 
           selected.each { |model| fill_record(model) }
 
-          puts I18n.t('menu.catalog.action_finished')
+          puts
+          puts TEXT.action_finished
         end
       end
 
@@ -97,7 +102,8 @@ module Menu
       extend SelectAndUpdate
 
       def self.call
-        puts I18n.t('menu.catalog.fill_song_options')
+        puts
+        puts TEXT.fill_song_options
 
         Songs::Repo.scan.each do |model|
           next if model.with_options?
@@ -105,7 +111,8 @@ module Menu
           fill_record(model)
         end
 
-        puts I18n.t('menu.catalog.action_finished')
+        puts
+        puts TEXT.action_finished
       end
     end
 
@@ -116,14 +123,14 @@ module Menu
         songs = Songs::Repo.scan.reject(&:with_options?)
 
         if songs.empty?
-          puts I18n.t('menu.catalog.no_new_songs')
+          puts TEXT.no_new_songs
           return
         end
 
         print_songs_without_options(songs)
 
         puts
-        puts I18n.t('menu.catalog.which_new_songs')
+        puts TEXT.which_new_songs
 
         select_and_fill_records(songs)
       end
@@ -136,7 +143,7 @@ module Menu
         songs = Songs::Repo.scan
 
         puts
-        print I18n.t('menu.catalog.find_song_by_name')
+        print TEXT.find_song_by_name
 
         input = Session.get_string
         return if input.empty?
@@ -144,13 +151,13 @@ module Menu
         found = songs.select { |model| model.name.include?(input) }
 
         if found.empty?
-          puts I18n.t('menu.catalog.songs_not_found')
+          puts TEXT.songs_not_found
         else
           # print_songs_without_options(found)
-          print_songs_with_options(found, {})
+          print_songs_with_options(found)
 
           puts
-          puts I18n.t('menu.catalog.which_songs')
+          puts TEXT.which_songs
 
           select_and_fill_records(found)
         end
@@ -162,7 +169,7 @@ module Menu
 
       def self.call
         puts
-        puts I18n.t('menu.catalog.check_files')
+        puts TEXT.check_files
 
         songs = Songs::Repo.all.reject(&:new?)
 
@@ -173,7 +180,7 @@ module Menu
 
         loop do
           puts
-          puts I18n.t('menu.catalog.filter_options')
+          puts TEXT.filter_options
 
           all_options.each do |option|
             puts "- #{option.title} -"
@@ -181,36 +188,31 @@ module Menu
             puts
           end
 
-          print I18n.t('menu.catalog.which_options')
+          print TEXT.which_options
 
-          values  = Session.get_string.split(' ')
+          input   = Session.get_string.split(' ')
           filters = {}
 
-          selected_option_values = {}
-
-          return if values.empty?
+          return if input.empty?
 
           puts
 
-          unless values[0] == '-'
-            filters[:tempo] = tempo.items_for_keys(values[0]).map { |text| tempo_items.key(text) }
+          unless input[0] == '-'
+            filters[:tempo] = tempo.items_for_keys(input[0]).map { |text| tempo_items.key(text) }
           end
 
           Config::OPTIONS.each.with_index do |(k, option), index|
             index += 1
-            next if values[index] == '-' || !values[index]
+            next if input[index] == '-' || !input[index]
 
-            selected   = option.items_for_keys(values[index])
-            filters[k] = selected
-
-            selected_option_values[k] = selected
+            filters[k] = option.items_for_keys(input[index])
           end
 
           selected_songs = songs.select { |model| model.match?([filters]) }
           if selected_songs.empty?
-            puts I18n.t('menu.catalog.songs_not_found_by_filter')
+            puts TEXT.songs_not_found_by_filter
           else
-            print_songs_with_options(selected_songs, selected_option_values)
+            print_songs_with_options(selected_songs)
             push_songs(selected_songs)
           end
         end
@@ -220,16 +222,16 @@ module Menu
 
       def self.push_songs(songs)
         puts
-        puts I18n.t('menu.catalog.which_songs_add_to_player')
+        puts TEXT.which_songs_add_to_player
 
         selected = select_songs_by_indices(songs).map(&:filename)
 
         if selected.empty?
-          puts I18n.t('menu.catalog.songs_not_selected')
+          puts TEXT.songs_not_selected
         else
           Songs::Player.add_songs(selected)
 
-          puts I18n.t('menu.catalog.songs_added', count: selected.size)
+          puts TEXT.songs_added(count: selected.size)
         end
       end
     end

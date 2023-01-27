@@ -1,54 +1,79 @@
 module Songs
   module FillOptions
+    TEXT = LocaleText.for_scope('songs.fill_options')
+
     class << self
       # @param song Songs::Model
       def call(song)
-        options = Config::OPTIONS.each_with_object({}) do |(key, option), acc|
-          selected = fill_option(key.to_s, option, song.options)
-          return unless selected
-
-          acc[key] = selected
+        Config::OPTIONS.each do |(key, option)|
+          print_option(key.to_s, option, song.options)
         end
 
-        song.sync(options, calc_bpm(song))
+        loop do
+          print '--> '
+
+          input  = Session.get_string.split(' ')
+          values = {}
+
+          next if input.empty?
+
+          if input.size > Config::OPTIONS.size
+            raise Session::InvalidInput, TEXT.too_many_values
+          end
+
+          Config::OPTIONS.each.with_index do |(k, option), index|
+            selected =
+              if input[index] == '-' || input.size < index + 1
+                []
+              else
+                option.items_for_keys(input[index])
+              end
+
+            if option.valid_count?(selected.size)
+              values[k] = selected
+            else
+              text = TEXT.required_count(option: option.title, count: option.select_range)
+              raise Session::InvalidInput, text
+            end
+          end
+
+          next if values.size != Config::OPTIONS.size
+
+          song.sync(values, calc_bpm(song))
+          break
+        rescue Session::InvalidInput => e
+          puts e.message # Показываем ошибку и возвращаемся в начало `loop`.
+        end
       end
 
       private
 
-      def fill_option(key, option, options)
+      def print_option(key, option, song_options)
         option_items = option.items_with_keys_as_hash
 
-        loop do
-          puts "- #{option.title} -"
-          options_to_output = option_items.each_with_object({items: [], underline: []}) do |(k, v), acc|
-            acc[:items] << "#{k}. #{v}"
-            acc[:underline] << acc[:items].size - 1 if options[key]&.include?(v)
-          end
-          Session.print_columns(**options_to_output)
-          selected = option.items_for_keys(Session.get_string)
+        puts "- #{option.title} -"
 
-          unless option.valid_count?(selected.size)
-            text = I18n.t('songs.fill_options.required_count', count: option.select_range)
-            raise Session::InvalidInput, text
-          end
-
-          return selected
-        rescue Session::InvalidInput => e
-          puts e.message
+        options_to_output = option_items.each_with_object({items: [], underline: []}) do |(k, v), acc|
+          acc[:items] << "#{k}. #{v}"
+          acc[:underline] << acc[:items].size - 1 if song_options[key]&.include?(v)
         end
+
+        Session.print_columns(**options_to_output)
+
+        puts
       end
 
       def calc_bpm(song)
-        algo_bpm = song.bpm
+        algo_bpm = song.file_bpm
         res      = nil
 
-        puts '- BPM -'
-        puts I18n.t('songs.fill_options.bpm.auto', bpm: song.bpm, label: bpm_text(algo_bpm))
+        puts
+        puts '- BPM -', TEXT.bpm('auto', bpm: algo_bpm, label: bpm_text(algo_bpm))
 
         loop do
-          print I18n.t('songs.fill_options.bpm.start')
+          print TEXT.bpm('start')
           STDIN.getch
-          print I18n.t('songs.fill_options.bpm.repeat')
+          print TEXT.bpm('repeat')
 
           start = Time.now
 
@@ -59,7 +84,7 @@ module Songs
           res = [0.5, 0.67, 1, 1.5, 2].min_by { |coeff| (manual_bpm - algo_bpm * coeff).abs } * algo_bpm
 
           puts
-          puts I18n.t('songs.fill_options.bpm.result', bpm: res, label: bpm_text(res))
+          puts TEXT.bpm('result', manual_bpm: manual_bpm.round(2), bpm: res.round(2), label: bpm_text(res))
 
           break unless repeat_calc_bpm?
         end
@@ -70,21 +95,20 @@ module Songs
       def repeat_calc_bpm?
         loop do
           puts
-          puts "1. #{I18n.t('songs.fill_options.bpm.menu.repeat')}"
-          puts "2. #{I18n.t('songs.fill_options.bpm.menu.next')}"
+          puts "1. #{TEXT.bpm('menu.repeat')}"
+          puts "2. #{TEXT.bpm('menu.next')}"
 
           case Session.get_char
           when '1' then return true
           when '2' then return false
           else
-            puts I18n.t('songs.fill_options.bpm.menu.unknown_action')
+            puts TEXT.bpm('menu.unknown_action')
           end
         end
       end
 
       def bpm_text(value)
-        text = Config::TEMPO.find { |_, tempo| tempo.match?(value) }&.first
-        text || I18n.t('songs.fill_options.bpm.no_data')
+        Config::TEMPO.find { |_, tempo| tempo.match?(value) }&.first || TEXT.bpm('no_data')
       end
     end
   end

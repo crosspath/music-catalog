@@ -1,27 +1,29 @@
 module Menu
   module Device
+    TEXT = LocaleText.for_scope('menu.device')
+
     module Sync
       def self.call
         puts
-        puts I18n.t('menu.device.check_files')
+        puts TEXT.check_files
         puts
 
         songs_to_copy, files_to_remove = prepare_lists
 
         have_changes = !songs_to_copy.empty? || !files_to_remove.empty?
 
-        if have_changes && Session.ask(I18n.t('menu.device.do_sync_songs'))
+        if have_changes && Session.ask(TEXT.do_sync_songs)
           device_dir = File.realpath(Config::DEVICE_MUSIC_DIR)
           local_dir  = File.realpath(Config::LOCAL_MUSIC_DIR)
 
-          puts '', I18n.t('menu.device.removing') unless files_to_remove.empty?
+          puts '', TEXT.removing unless files_to_remove.empty?
 
           files_to_remove.each do |file_name|
             puts file_name
             File.delete(File.join(device_dir, file_name))
           end
 
-          puts '', I18n.t('menu.device.copying') unless songs_to_copy.empty?
+          puts '', TEXT.copying unless songs_to_copy.empty?
 
           songs_to_copy.each do |song|
             file_name     = song.filename
@@ -35,7 +37,7 @@ module Menu
           puts
         end
 
-        if Session.ask(I18n.t('menu.device.do_sync_playlists'))
+        if Session.ask(TEXT.do_sync_playlists)
           Menu::Playlists.call
           Session.mkdir(Config::DEVICE_PLAYLISTS_DIR)
 
@@ -69,7 +71,7 @@ module Menu
         end
 
         puts
-        puts I18n.t('menu.device.action_finished')
+        puts TEXT.action_finished
       rescue Session::Interrupt
         nil
       end
@@ -87,11 +89,11 @@ module Menu
           songs.none? { |song| song.filename == x } && x
         end
 
-        puts I18n.t('menu.device.songs_to_copy', count: songs_to_copy.size)
+        puts TEXT.songs_to_copy(count: songs_to_copy.size)
 
         print_list(songs_to_copy, &:filename)
 
-        puts I18n.t('menu.device.songs_to_remove', count: files_to_remove.size)
+        puts TEXT.songs_to_remove(count: files_to_remove.size)
 
         print_list(files_to_remove, &:itself)
 
@@ -99,7 +101,7 @@ module Menu
       end
 
       def self.print_list(list)
-        return if list.empty? || !Session.ask(I18n.t('menu.device.show_list'))
+        return if list.empty? || !Session.ask(TEXT.show_list)
 
         puts
 

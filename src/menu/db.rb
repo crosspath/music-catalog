@@ -1,11 +1,13 @@
 module Menu
   module DB
     module Export
+      TEXT = LocaleText.for_scope('menu.db.export')
+
       def self.call
         default_path = File.join(File.realpath(Config::LOCAL_MUSIC_DIR), 'dump.json')
 
         puts
-        print I18n.t('menu.db.export.filename', filename: default_path)
+        print TEXT.filename(filename: default_path)
 
         dump = Session.get_string
         dump = default_path if dump.empty?
@@ -17,7 +19,7 @@ module Menu
 
           File.write(dump, JSON.generate(records))
         else
-          puts I18n.t('menu.db.export.cannot_write', filename: dump)
+          puts TEXT.cannot_write(filename: dump)
         end
       rescue Session::Interrupt
         nil
@@ -25,17 +27,19 @@ module Menu
     end
 
     module Import
+      TEXT = LocaleText.for_scope('menu.db.import')
+
       def self.call
         default_path = File.join(File.realpath(Config::LOCAL_MUSIC_DIR), 'dump.json')
 
         puts
-        print I18n.t('menu.db.import.filename', filename: default_path)
+        print TEXT.filename(filename: default_path)
 
         dump = Session.get_string
         dump = default_path if dump.empty?
 
         unless File.readable?(dump)
-          puts I18n.t('menu.db.export.cannot_read', filename: dump)
+          puts TEXT.cannot_read(filename: dump)
           return
         end
 
@@ -48,6 +52,8 @@ module Menu
             upsert: true
           )
         end
+      rescue Session::Interrupt
+        nil
       end
     end
   end
