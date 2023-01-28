@@ -81,7 +81,7 @@ module Songs
 
           manual_bpm = 60 / (Time.now - start) * 4
 
-          res = [0.5, 0.67, 1, 1.5, 2].min_by { |coeff| (manual_bpm - algo_bpm * coeff).abs } * algo_bpm
+          res = [0.5, 0.67, 1, 1.5, 2, 4].min_by { |coeff| (manual_bpm - algo_bpm * coeff).abs } * algo_bpm
 
           puts
           puts TEXT.bpm('result', manual_bpm: manual_bpm.round(2), bpm: res.round(2), label: bpm_text(res))
