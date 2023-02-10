@@ -31,6 +31,7 @@ module Menu
       end
     end
   rescue Session::Interrupt
+    puts '^C'
     return
   end
 end

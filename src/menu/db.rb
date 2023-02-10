@@ -22,7 +22,7 @@ module Menu
           puts TEXT.cannot_write(filename: dump)
         end
       rescue Session::Interrupt
-        nil
+        puts '^C'
       end
     end
 
@@ -53,7 +53,7 @@ module Menu
           )
         end
       rescue Session::Interrupt
-        nil
+        puts '^C'
       end
     end
   end

@@ -1,19 +1,19 @@
 module Songs
   module FillOptions
+    class RetryError < RuntimeError
+    end
+
     TEXT = LocaleText.for_scope('songs.fill_options')
 
     class << self
       # @param song Songs::Model
       def call(song)
-        Config::OPTIONS.each do |(key, option)|
-          print_option(key.to_s, option, song.options)
-        end
+        print_options(song)
 
         loop do
           print '--> '
 
-          input  = Session.get_string.split(' ')
-          values = {}
+          input = Session.get_string.split(' ')
 
           next if input.empty?
 
@@ -21,32 +21,32 @@ module Songs
             raise Session::InvalidInput, TEXT.too_many_values
           end
 
-          Config::OPTIONS.each.with_index do |(k, option), index|
-            selected =
-              if input[index] == '-' || input.size < index + 1
-                []
-              else
-                option.items_for_keys(input[index])
-              end
-
-            if option.valid_count?(selected.size)
-              values[k] = selected
-            else
-              text = TEXT.required_count(option: option.title, count: option.select_range)
-              raise Session::InvalidInput, text
-            end
-          end
+          values = selected_values(input)
 
           next if values.size != Config::OPTIONS.size
 
-          song.sync(values, calc_bpm(song))
-          break
+          begin
+            song.sync(values, CalcBpm.call(song))
+            break
+          rescue Session::Interrupt
+            # Вернуться к вводу опций.
+            puts '^C', ''
+            raise RetryError
+          end
         rescue Session::InvalidInput => e
           puts e.message # Показываем ошибку и возвращаемся в начало `loop`.
         end
+      rescue RetryError
+        retry
       end
 
       private
+
+      def print_options(song)
+        Config::OPTIONS.each do |(key, option)|
+          print_option(key.to_s, option, song.options)
+        end
+      end
 
       def print_option(key, option, song_options)
         option_items = option.items_with_keys_as_hash
@@ -63,52 +63,26 @@ module Songs
         puts
       end
 
-      def calc_bpm(song)
-        algo_bpm = song.file_bpm
-        res      = nil
+      def selected_values(input)
+        values = {}
 
-        puts
-        puts '- BPM -', TEXT.bpm('auto', bpm: algo_bpm, label: bpm_text(algo_bpm))
+        Config::OPTIONS.each.with_index do |(k, option), index|
+          selected =
+            if input[index] == '-' || input.size < index + 1
+              []
+            else
+              option.items_for_keys(input[index])
+            end
 
-        loop do
-          print TEXT.bpm('start')
-          STDIN.getch
-          print TEXT.bpm('repeat')
-
-          start = Time.now
-
-          STDIN.getch
-
-          manual_bpm = 60 / (Time.now - start) * 4
-
-          res = [0.5, 0.67, 1, 1.5, 2, 4].min_by { |coeff| (manual_bpm - algo_bpm * coeff).abs } * algo_bpm
-
-          puts
-          puts TEXT.bpm('result', manual_bpm: manual_bpm.round(2), bpm: res.round(2), label: bpm_text(res))
-
-          break unless repeat_calc_bpm?
-        end
-
-        res
-      end
-
-      def repeat_calc_bpm?
-        loop do
-          puts
-          puts "1. #{TEXT.bpm('menu.repeat')}"
-          puts "2. #{TEXT.bpm('menu.next')}"
-
-          case Session.get_char
-          when '1' then return true
-          when '2' then return false
+          if option.valid_count?(selected.size)
+            values[k] = selected
           else
-            puts TEXT.bpm('menu.unknown_action')
+            text = TEXT.required_count(option: option.title, count: option.select_range)
+            raise Session::InvalidInput, text
           end
         end
-      end
 
-      def bpm_text(value)
-        Config::TEMPO.find { |_, tempo| tempo.match?(value) }&.first || TEXT.bpm('no_data')
+        values
       end
     end
   end

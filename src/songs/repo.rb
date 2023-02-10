@@ -28,17 +28,32 @@ module Songs
       end
 
       def scan
-        models   = all
-        @cache ||= {}
-
-        cached_keys = @cache.keys
-        new_songs   = models.select { |model| !cached_keys.include?(model.filename) && model.new? }
-
+        models        = all
+        new_songs     = select_new_songs(models)
         show_progress = new_songs.size > 50
-        counter       = 0
         filenames     = []
 
         print TEXT.scanning(count: new_songs.size) if show_progress
+
+        add_models_to_cache(models, new_songs, show_progress, filenames)
+        delete_obsolete_keys_from_cache(filenames)
+
+        puts if show_progress
+
+        @cache.values
+      end
+
+      private
+
+      def select_new_songs(models)
+        @cache    ||= {}
+        cached_keys = @cache.keys
+
+        models.select { |model| !cached_keys.include?(model.filename) && model.new? }
+      end
+
+      def add_models_to_cache(models, new_songs, show_progress, filenames)
+        counter = 0
 
         models.each do |model|
           filenames << model.filename
@@ -54,14 +69,12 @@ module Songs
             @cache[model.filename] = model
           end
         end
+      end
 
+      def delete_obsolete_keys_from_cache(filenames)
         @cache.each_key do |key|
           @cache.delete(key) unless filenames.include?(key)
         end
-
-        puts if show_progress
-
-        @cache.values
       end
     end
   end

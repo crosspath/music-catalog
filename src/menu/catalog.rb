@@ -113,6 +113,10 @@ module Menu
 
         puts
         puts TEXT.action_finished
+      rescue Session::Interrupt
+        # Знак '^C' выводится при нажатии Ctrl+C во время выполнения `Session.get_string`,
+        # поэтому не требуется выводить его дополнительно.
+        puts
       end
     end
 
@@ -133,6 +137,10 @@ module Menu
         puts TEXT.which_new_songs
 
         select_and_fill_records(songs)
+      rescue Session::Interrupt
+        # Знак '^C' выводится при нажатии Ctrl+C во время выполнения `Session.get_string`,
+        # поэтому не требуется выводить его дополнительно.
+        puts
       end
     end
 
@@ -161,6 +169,10 @@ module Menu
 
           select_and_fill_records(found)
         end
+      rescue Session::Interrupt
+        # Знак '^C' выводится при нажатии Ctrl+C во время выполнения `Session.get_string`,
+        # поэтому не требуется выводить его дополнительно.
+        puts
       end
     end
 
@@ -217,7 +229,9 @@ module Menu
           end
         end
       rescue Session::Interrupt
-        nil
+        # Знак '^C' выводится при нажатии Ctrl+C во время выполнения `Session.get_string`,
+        # поэтому не требуется выводить его дополнительно.
+        puts
       end
 
       def self.push_songs(songs)
