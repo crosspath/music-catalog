@@ -8,41 +8,55 @@ module Session
   module_function
 
   def print_columns(items: [], underline: [])
-    max_length = items.max_by(&:size).size
+    columns_sizes = calc_columns_sizes(items.map(&:size))
 
-    count = count_items_in_line(max_length)
-    if max_length < Session.columns && items.size > count
-      items = items.map.with_index do |item, index|
-        if underline.include?(index)
-          negate_output(item).ljust(max_length + 8)
-        else
-          item.ljust(max_length)
-        end
-      end
-    else
+    if columns_sizes.empty?
+      # Print one item per line.
       items = items.map.with_index do |item, index|
         underline.include?(index) ? negate_output(item) : item
       end
-    end
-
-    items.each_slice(count) do |row|
-      puts row.join(' | ')
+      puts items
+    else
+      # Print items in columns.
+      items = items.map.with_index do |item, index|
+        length = columns_sizes[index % columns_sizes.size]
+        if underline.include?(index)
+          negate_output(item).ljust(length + 8)
+        else
+          item.ljust(length)
+        end
+      end
+      items.each_slice(columns_sizes.size) do |row|
+        puts row.join(' | ')
+      end
     end
   end
 
-  def count_items_in_line(max_length)
-    columns = Session.columns
-    count   = 0
+  def calc_columns_sizes(items_lengths)
+    columns     = Session.columns
+    max_lengths = []
+    try_count   = items_lengths.size
 
     loop do
-      if max_length * (count + 1) + 3 * count <= columns
-        count += 1
-      else
-        break
-      end
-    end
+      # Given items_lengths = [8, 10, 13, 17] (sum + spaces: 57)
+      # Given columns = 50
+      # Trace variables' values by loop iteration:
+      #   when try_count = 4, then try_lengths = [[8, 10, 13, 17]]
+      #   when try_count = 3, then try_lengths = [[8, 10, 13], [17]]
+      try_lengths = items_lengths.each_slice(try_count).to_a
 
-    count
+      # Trace variables' values by loop iteration:
+      #   when try_count = 4, then max_lengths = [8, 10, 13, 17]
+      #   when try_count = 3, then max_lengths = [17, 10, 13]
+      max_lengths = try_lengths.each_with_object(Array.new(try_count, 0)) do |e, a|
+        e.each_with_index { |x, i| a[i] = [a[i], x].max }
+      end
+
+      return max_lengths if max_lengths.sum + (max_lengths.size * 3) - 3 <= columns
+
+      try_count -= 1
+      return [] if try_count == 0
+    end
   end
 
   def columns
