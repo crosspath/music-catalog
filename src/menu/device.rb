@@ -83,9 +83,18 @@ module Menu
         songs = Songs::Repo.scan
         songs_to_copy = songs.reject(&:synced?)
 
-        on_device = Dir[File.join(device_abs_dir, '**/*')].reject { |x| File.directory?(x) }
-        files_to_remove = on_device.filter_map do |x|
+        on_device = Dir[File.join(device_abs_dir, '**/*')]
+
+        on_device = on_device.filter_map do |x|
+          next if File.directory?(x)
+
           x = x[skip..]
+          next if Config::IGNORE_DIRECTORIES.any? { |dir| x.start_with?(dir) }
+
+          x
+        end
+
+        files_to_remove = on_device.filter_map do |x|
           songs.none? { |song| song.filename == x } && x
         end
 
