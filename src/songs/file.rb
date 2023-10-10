@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Songs
   class File
     RE_BPM = /:\s(\d+(?:\.\d+))\sBPM$/
@@ -12,8 +14,8 @@ module Songs
       path   = ::File.join(Config::LOCAL_MUSIC_DIR, @filename)
       output = `file #{path.inspect}`
 
-      output.sub!(path, '')
-      output.include?('MPEG ADTS, layer III') # mp3
+      output.sub!(path, "")
+      output.include?("MPEG ADTS, layer III") # mp3
     end
 
     def bpm

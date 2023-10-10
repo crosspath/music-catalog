@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Songs
   class PlaylistGenerator
     def initialize(config, songs, save_to)

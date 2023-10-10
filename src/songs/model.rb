@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Songs
   class Model
     extend Forwardable
@@ -7,8 +9,8 @@ module Songs
 
     # @param file Songs::File
     # @params record BSON::Document
-    #   { '_id' => BSON::ObjectId, 'options' => {...}, 'filename' => String,
-    #   'created_at' => Time, 'updated_at' => Time, 'bpm' => Float, 'synced_at' => Time }
+    #   { "_id" => BSON::ObjectId, "options" => {...}, "filename" => String,
+    #   "created_at" => Time, "updated_at" => Time, "bpm" => Float, "synced_at" => Time }
     def initialize(file, record)
       @file   = file
       @record = record && Songs::DbEntry.new(record)

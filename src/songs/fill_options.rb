@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 module Songs
   module FillOptions
     class RetryError < RuntimeError
     end
 
-    TEXT = LocaleText.for_scope('songs.fill_options')
+    TEXT = LocaleText.for_scope("songs.fill_options")
 
     class << self
       # @param song Songs::Model
@@ -11,9 +13,9 @@ module Songs
         print_options(song)
 
         loop do
-          print '--> '
+          print "--> "
 
-          input = Session.get_string.split(' ')
+          input = Session.get_string.split(" ")
 
           next if input.empty?
 
@@ -30,7 +32,7 @@ module Songs
             break
           rescue Session::Interrupt
             # Вернуться к вводу опций.
-            puts '^C', ''
+            puts "^C", ""
             raise RetryError
           end
         rescue Session::InvalidInput => e
@@ -68,7 +70,7 @@ module Songs
 
         Config::OPTIONS.each.with_index do |(k, option), index|
           selected =
-            if input[index] == '-' || input.size < index + 1
+            if input[index] == "-" || input.size < index + 1
               []
             else
               option.items_for_keys(input[index])

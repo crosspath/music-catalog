@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module LocaleText
   def self.for_scope(scope)
-    scope = scope.split('.') if scope.is_a?(String)
+    scope = scope.split(".") if scope.is_a?(String)
     scope.map!(&:to_sym)
 
     result = Object.new

@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Menu
   module Device
-    TEXT = LocaleText.for_scope('menu.device')
+    TEXT = LocaleText.for_scope("menu.device")
 
     module Sync
       def self.call
@@ -16,14 +18,14 @@ module Menu
           device_dir = File.realpath(Config::DEVICE_MUSIC_DIR)
           local_dir  = File.realpath(Config::LOCAL_MUSIC_DIR)
 
-          puts '', TEXT.removing unless files_to_remove.empty?
+          puts "", TEXT.removing unless files_to_remove.empty?
 
           files_to_remove.each do |file_name|
             puts file_name
             File.delete(File.join(device_dir, file_name))
           end
 
-          puts '', TEXT.copying unless songs_to_copy.empty?
+          puts "", TEXT.copying unless songs_to_copy.empty?
 
           songs_to_copy.each do |song|
             file_name     = song.filename
@@ -46,8 +48,8 @@ module Menu
           device_dir_skip = device_pl_dir.size + 1
           local_dir_skip  = local_pl_dir.size + 1
 
-          on_device = Dir[File.join(device_pl_dir, '*')].reject { |x| File.directory?(x) }
-          on_local  = Dir[File.join(local_pl_dir, '*')].reject { |x| File.directory?(x) }
+          on_device = Dir[File.join(device_pl_dir, "*")].reject { |x| File.directory?(x) }
+          on_local  = Dir[File.join(local_pl_dir, "*")].reject { |x| File.directory?(x) }
 
           on_device.map! { |file_path| file_path[device_dir_skip..] }
           on_local.map! { |file_path| file_path[local_dir_skip..] }
@@ -83,7 +85,7 @@ module Menu
         songs = Songs::Repo.scan
         songs_to_copy = songs.reject(&:synced?)
 
-        on_device = Dir[File.join(device_abs_dir, '**/*')]
+        on_device = Dir[File.join(device_abs_dir, "**/*")]
 
         on_device = on_device.filter_map do |x|
           next if File.directory?(x)

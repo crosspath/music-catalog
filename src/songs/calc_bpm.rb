@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module Songs
   module CalcBpm
     MULTIPLIERS = [0.5, 0.67, 1, 1.5, 2, 3, 4]
 
-    TEXT = LocaleText.for_scope('songs.fill_options.bpm')
+    TEXT = LocaleText.for_scope("songs.fill_options.bpm")
 
     class << self
       # @param song Songs::Model
@@ -11,7 +13,7 @@ module Songs
         res      = nil
 
         puts
-        puts '- BPM -', TEXT.auto(bpm: algo_bpm, label: bpm_text(algo_bpm))
+        puts "- BPM -", TEXT.auto(bpm: algo_bpm, label: bpm_text(algo_bpm))
 
         loop do
           print TEXT.start
@@ -40,14 +42,14 @@ module Songs
       def repeat_calc_bpm?
         loop do
           puts
-          puts "1. #{TEXT.menu('repeat')}"
-          puts "2. #{TEXT.menu('next')}"
+          puts "1. #{TEXT.menu("repeat")}"
+          puts "2. #{TEXT.menu("next")}"
 
           case Session.get_char
-          when '1' then return true
-          when '2' then return false
+          when "1" then return true
+          when "2" then return false
           else
-            puts TEXT.menu('unknown_action')
+            puts TEXT.menu("unknown_action")
           end
         end
       end

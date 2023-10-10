@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Songs
   module Repo
-    TEXT = LocaleText.for_scope('songs.repo')
+    TEXT = LocaleText.for_scope("songs.repo")
 
     class << self
       attr_reader :cache
@@ -9,7 +11,7 @@ module Songs
         abs_dir = ::File.realpath(Config::LOCAL_MUSIC_DIR)
         skip    = abs_dir.size + 1
 
-        Dir[::File.join(abs_dir, '**', '*')].filter_map do |filepath|
+        Dir[::File.join(abs_dir, "**", "*")].filter_map do |filepath|
           next if ::File.directory?(filepath)
 
           filename = filepath[skip..]
@@ -60,7 +62,7 @@ module Songs
           if new_songs.include?(model)
             if show_progress
               counter += 1
-              print '.' if counter % 50 == 0
+              print "." if counter % 50 == 0
             end
             @cache[model.filename] = model if model.audio?
           elsif model.new?

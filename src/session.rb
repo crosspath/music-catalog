@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Session
   class Interrupt < RuntimeError
   end
@@ -27,7 +29,7 @@ module Session
         end
       end
       items.each_slice(columns_sizes.size) do |row|
-        puts row.join(' | ')
+        puts row.join(" | ")
       end
     end
   end
@@ -74,7 +76,7 @@ module Session
   end
 
   def get_string
-    Signal.trap('INT') { raise Interrupt } # Ctrl+C
+    Signal.trap("INT") { raise Interrupt } # Ctrl+C
     result = gets # nil if Ctrl+D
     raise Interrupt unless result
 
@@ -85,8 +87,8 @@ module Session
     loop do
       puts "#{question} (y/n)"
       case Session.get_char
-      when 'y' then return true
-      when 'n' then return false
+      when "y" then return true
+      when "n" then return false
       end
     end
   end
@@ -102,12 +104,12 @@ module Session
   end
 
   def command(tpl, files)
-    windows = Config::PLAYER[:os] == 'windows'
+    windows = Config::PLAYER[:os] == "windows"
 
-    files = files.map { |x| x.gsub('/', '\\') } if windows
-    files = files.map { |x| "#{Config::PLAYER[:path]}#{windows ? '\\' : '/'}#{x}".inspect }
+    files = files.map { |x| x.gsub("/", "\\") } if windows
+    files = files.map { |x| "#{Config::PLAYER[:path]}#{windows ? "\\" : "/"}#{x}".inspect }
 
-    str = sprintf(tpl, files: files.join(' '))
+    str = sprintf(tpl, files: files.join(" "))
 
     # pgroup: true -- отвязать экземпляр проигрывателя от процесса Ruby,
     # чтобы при остановке Ruby продолжил работать процесс проигрывателя.

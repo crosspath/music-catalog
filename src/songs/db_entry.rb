@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Songs
   class DbEntry
-    TEXT = LocaleText.for_scope('songs.db_entry')
+    TEXT = LocaleText.for_scope("songs.db_entry")
 
     def self.new_by_filename(filename)
       hash = Config::DB_SONGS.find(filename: filename).first
@@ -37,9 +39,9 @@ module Songs
       matchers.any? do |matcher| # => Hash(Symbol, Array(String))
         matcher.all? do |key, values|
           key      = key.to_s
-          negative = key.start_with?('-')
+          negative = key.start_with?("-")
           key      = key[1..-1] if negative
-          if key == 'tempo'
+          if key == "tempo"
             negative ? not_match_tempo?(values) : match_tempo?(values)
           else
             negative ? not_match_option?(key, values) : match_option?(key, values)

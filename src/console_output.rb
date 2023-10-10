@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 module ConsoleOutput
   class Cell
     attr_reader :text, :style, :size, :sizes, :min_width
 
     def initialize(text, style = nil)
       @text = text
-      @text = @text.split(' ') if @text.respond_to?(:split) # String
+      @text = @text.split(" ") if @text.respond_to?(:split) # String
 
       @style     = style
       @sizes     = @text.map(&:size)
@@ -13,7 +15,7 @@ module ConsoleOutput
     end
 
     def to_s
-      @to_s ||= @style == :negative ? "\e[7m#{@text.join(' ')}\e[0m" : @text.join(' ')
+      @to_s ||= @style == :negative ? "\e[7m#{@text.join(" ")}\e[0m" : @text.join(" ")
     end
   end
 
@@ -60,14 +62,14 @@ module ConsoleOutput
         padding = widths[hash[:col_index]]
         padding -= hash[:value].sum { |s| s.size + 1 } - 1 unless hash[:value].empty?
         if padding > 0
-          hash[:value] << '' if hash[:value].empty?
-          hash[:value].last << ' ' * padding
+          hash[:value] << "" if hash[:value].empty?
+          hash[:value].last << " " * padding
         end
         new_rows[hash[:row_index]] ||= []
         new_rows[hash[:row_index]][hash[:col_index]] = Cell.new(hash[:value], hash[:style])
       end
       new_rows.map do |items|
-        items = widths.map.with_index { |w, index| items[index] || Cell.new([' ' * w]) }
+        items = widths.map.with_index { |w, index| items[index] || Cell.new([" " * w]) }
         Row.new(items)
       end
     end
@@ -77,7 +79,7 @@ module ConsoleOutput
     end
 
     def to_s
-      @cells.map(&:to_s).join(' | ')
+      @cells.map(&:to_s).join(" | ")
     end
   end
 
@@ -117,7 +119,7 @@ module ConsoleOutput
 
       span_rows.each_with_index do |array, index|
         array.each { |row| puts row }
-        puts '*' if span_count > index + 1
+        puts "*" if span_count > index + 1
       end
     end
   end

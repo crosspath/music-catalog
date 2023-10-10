@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Menu
   module Playlists
-    TEXT = LocaleText.for_scope('menu.playlists')
+    TEXT = LocaleText.for_scope("menu.playlists")
 
     def self.call
       save_to = Config::LOCAL_PLAYLISTS_DIR
