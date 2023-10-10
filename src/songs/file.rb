@@ -15,7 +15,7 @@ module Songs
       output = `file #{path.inspect}`
 
       output.sub!(path, "")
-      output.include?("MPEG ADTS, layer III") # mp3
+      output.include?("MPEG ADTS, layer III") || output.include?("Audio file with ID3") # mp3
     end
 
     def bpm
