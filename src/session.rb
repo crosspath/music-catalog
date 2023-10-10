@@ -96,7 +96,7 @@ module Session
   def mkdir(path)
     parts = path.split(File::SEPARATOR)
 
-    first = parts.shift
+    first = parts.shift.dup
     parts.each_with_object(first) do |e, a|
       a << "#{File::SEPARATOR}#{e}"
       Dir.mkdir(a) unless Dir.exists?(a)

@@ -63,7 +63,7 @@ module ConsoleOutput
         padding -= hash[:value].sum { |s| s.size + 1 } - 1 unless hash[:value].empty?
         if padding > 0
           hash[:value] << "" if hash[:value].empty?
-          hash[:value].last << " " * padding
+          hash[:value][-1] += " " * padding
         end
         new_rows[hash[:row_index]] ||= []
         new_rows[hash[:row_index]][hash[:col_index]] = Cell.new(hash[:value], hash[:style])
