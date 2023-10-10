@@ -34,6 +34,14 @@ ru:
       songs_to_copy: 'Сколько песен выбрано для копирования: %{count}'
       songs_to_remove: 'Сколько песен выбрано для удаления: %{count}'
     db:
+      eval:
+        greeting: |
+          Можете написать и выполнить код на языке Ruby, чтобы прочитать или изменить какие-либо записи в БД.
+          Справка: https://rubydoc.info/gems/mongo/Mongo/Collection
+          Примеры кода:
+          - Прочитать все записи: Config::DB_SONGS.find
+          - Удалить все записи: Config::DB_SONGS.delete_many
+          Напишите exit для выхода.
       export:
         cannot_write: 'Нет прав на запись в файл %{filename}'
         filename: 'Название файла (%{filename}) --> '

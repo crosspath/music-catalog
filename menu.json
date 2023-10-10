@@ -22,5 +22,6 @@
   },
   "5": {"title": "Экспорт БД", "action": "DB.Export"},
   "6": {"title": "Импорт БД", "action": "DB.Import"},
+  "7": {"title": "Консоль для управления БД", "action": "DB.Eval"},
   "!": {"title": "Выход", "action": "back"}
 }

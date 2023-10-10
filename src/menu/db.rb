@@ -56,5 +56,18 @@ module Menu
         puts '^C'
       end
     end
+
+    module Eval
+      TEXT = LocaleText.for_scope('menu.db.eval')
+
+      def self.call
+        puts
+        print TEXT.greeting
+
+        binding.irb
+      rescue Session::Interrupt
+        puts '^C'
+      end
+    end
   end
 end
