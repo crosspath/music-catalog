@@ -99,7 +99,7 @@ module Session
     first = parts.shift.dup
     parts.each_with_object(first) do |e, a|
       a << "#{File::SEPARATOR}#{e}"
-      Dir.mkdir(a) unless Dir.exists?(a)
+      Dir.mkdir(a) unless Dir.exist?(a)
     end
   end
 
