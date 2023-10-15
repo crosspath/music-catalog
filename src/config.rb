@@ -60,7 +60,11 @@ class Config
   LOCAL_PLAYLISTS_DIR = CONFIG[:local][:playlists]
   DEVICE_MUSIC_DIR = CONFIG[:portable][:music]
   DEVICE_PLAYLISTS_DIR = CONFIG[:portable][:playlists]
-  IGNORE_DIRECTORIES = (CONFIG[:ignore] || []).map { |dir| dir.end_with?("/") ? dir : "#{dir}/" }
+
+  IGNORE_DIRECTORIES = (CONFIG[:ignore] || []).map do |dir|
+    dir = dir.downcase
+    dir.end_with?("/") ? dir : "#{dir}/"
+  end
 
   MONGO = Mongo::Client.new(CONFIG[:mongo])
   DB_SONGS = MONGO[:songs]

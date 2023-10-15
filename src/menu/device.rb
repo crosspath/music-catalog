@@ -80,18 +80,16 @@ module Menu
 
       def self.prepare_lists
         device_abs_dir = File.realpath(Config::DEVICE_MUSIC_DIR)
-        skip           = device_abs_dir.size + 1
 
         songs = Songs::Repo.scan
         songs_to_copy = songs.reject(&:synced?)
 
-        on_device = Dir[File.join(device_abs_dir, "**/*")]
+        on_device = Dir["**/*", base: device_abs_dir]
 
         on_device = on_device.filter_map do |x|
-          next if File.directory?(x)
-
-          x = x[skip..]
-          next if Config::IGNORE_DIRECTORIES.any? { |dir| x.start_with?(dir) }
+          testname = x.downcase
+          next if Config::IGNORE_DIRECTORIES.any? { |dir| testname.start_with?(dir) }
+          next if File.directory?(File.join(device_abs_dir, x))
 
           x
         end

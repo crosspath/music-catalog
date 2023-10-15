@@ -80,7 +80,10 @@ module Session
     result = gets # nil if Ctrl+D
     raise Interrupt unless result
 
-    result.chomp
+    result.chomp!
+
+    # Sometimes `result` includes this symbol when input string has non-ASCII characters.
+    (result.chars - ["\xD0"]).join
   end
 
   def ask(question)

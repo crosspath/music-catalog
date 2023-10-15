@@ -155,10 +155,10 @@ module Menu
         puts
         print TEXT.find_song_by_name
 
-        input = Session.get_string
+        input = Session.get_string.downcase
         return if input.empty?
 
-        found = songs.select { |model| model.name.include?(input) }
+        found = songs.select { |model| model.name.downcase.include?(input) }
 
         if found.empty?
           puts TEXT.songs_not_found

@@ -9,17 +9,20 @@ module Songs
 
       def files
         abs_dir = ::File.realpath(Config::LOCAL_MUSIC_DIR)
-        skip    = abs_dir.size + 1
 
-        Dir[::File.join(abs_dir, "**", "*")].filter_map do |filepath|
-          next if ::File.directory?(filepath)
+        # Ignore some directories before performing full scan.
+        root_entries = Dir["*", base: abs_dir].filter_map do |fp|
+          Config::IGNORE_DIRECTORIES.include?(fp.downcase) ? nil : fp
+        end
 
-          filename = filepath[skip..]
-          testname = "#{filename}/"
+        search_pattern = "{#{root_entries.join(",")}}/**/*"
 
+        (root_entries + Dir[search_pattern, base: abs_dir]).filter_map do |filepath|
+          testname = "#{filepath}/".downcase
           next if Config::IGNORE_DIRECTORIES.any? { |dir| testname.start_with?(dir) }
+          next if ::File.directory?(::File.join(abs_dir, filepath))
 
-          Songs::File.new(filename)
+          Songs::File.new(filepath)
         end
       end
 
