@@ -25,11 +25,11 @@ module Songs
     end
 
     def bpm
-      record.bpm || @file.bpm
+      (record&.bpm || @file.bpm).round(1)
     end
 
     def file_bpm
-      @file.bpm
+      @file.bpm.round(1)
     end
 
     def name
