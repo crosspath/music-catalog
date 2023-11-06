@@ -3,7 +3,7 @@
 Pre-requirements:
 
 1. Install MongoDB, Ruby and Clementine
-2. Run command: `sudo apt install --no-install-recommends bpm-tools`
+2. Run command: `sudo apt install --no-install-recommends bpm-tools libsox-fmt-all`
 3. Run command: `bundle install`
 4. Create file `config.json` from the template: `cp config-example.json config.json`
 5. Run `sudo systemctl start mongod` or `sudo service mongo start`

@@ -22,9 +22,11 @@ module Songs
       @bpm ||= begin
         path   = ::File.join(Config::LOCAL_MUSIC_DIR, @filename)
         output = `bpm-tag -f -n -m 50 -x 310 #{path.inspect} 2>&1`
-        match  = output.match(RE_BPM)
+        raise RuntimeError.new(output) if output.include?("\nsox FAIL")
 
+        match  = output.match(RE_BPM)
         raise RuntimeError.new(output) unless match
+
         match[1].to_f
       end
     end
