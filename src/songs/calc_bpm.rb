@@ -2,7 +2,7 @@
 
 module Songs
   module CalcBpm
-    MULTIPLIERS = [0.5, 0.67, 1, 1.5, 2, 3, 4]
+    MULTIPLIERS = [0.5, 0.6, 0.67, 1, 1.5, 1.67, 2, 3, 4]
 
     TEXT = LocaleText.for_scope("songs.fill_options.bpm")
 
