@@ -15,6 +15,8 @@ module Songs
           Config::IGNORE_DIRECTORIES.include?(fp.downcase) ? nil : fp
         end
 
+        raise TEXT.nothing_found(dir: abs_dir) if root_entries.empty?
+
         search_pattern = "{#{root_entries.join(",")}}/**/*"
 
         (root_entries + Dir[search_pattern, base: abs_dir]).filter_map do |filepath|
